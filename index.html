@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iOS 개념 시각화 LAB</title>
+  <meta name="description" content="13가지 iOS 핵심 개념을 인터랙티브하게 학습하는 시각화 도구" />
+  <meta property="og:title" content="iOS 개념 시각화 LAB" />
+  <meta property="og:description" content="Call by Value/Ref, ARC, Delegate, async/await 등 13가지 핵심 iOS 개념" />
+  <meta property="og:type" content="website" />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#f5f4f0}
+    #loading{
+      position:fixed;inset:0;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;background:#f5f4f0;
+      z-index:9999;gap:16px;transition:opacity .5s ease;
+    }
+    .ld-logo{
+      width:56px;height:56px;border-radius:16px;
+      background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+      display:flex;align-items:center;justify-content:center;
+      font-size:28px;
+      box-shadow:0 8px 28px rgba(99,102,241,.4);
+      animation:ldpulse 1.5s ease-in-out infinite;
+    }
+    .ld-text{color:#6b6860;font-family:sans-serif;font-size:14px}
+    @keyframes ldpulse{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.1) rotate(-3deg)}}
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="ld-logo">🍎</div>
+    <p class="ld-text">iOS 개념 시각화 LAB 로딩 중…</p>
+  </div>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const LT = {
+  bg:"#f5f4f0",sur:"#ffffff",sur2:"#f0efe9",bdr:"#e2e0d8",bdr2:"#d0cec4",
+  tx:"#1a1916",tx2:"#6b6860",tx3:"#a8a49e",
+  blue:"#2563eb",blueBg:"#eff6ff",blueBrd:"#bfdbfe",
+  grn:"#16a34a",grnBg:"#f0fdf4",grnBrd:"#bbf7d0",
+  red:"#dc2626",redBg:"#fef2f2",redBrd:"#fecaca",
+  amb:"#d97706",ambBg:"#fffbeb",ambBrd:"#fde68a",
+  pur:"#7c3aed",purBg:"#faf5ff",purBrd:"#ddd6fe",
+  cya:"#0891b2",cyaBg:"#ecfeff",cyaBrd:"#a5f3fc",
+  cod:"#1e1b18",codBg:"#fafaf8",codBdr:"#e5e3da",
+  sha:"rgba(0,0,0,0.07)",
+};
+const DK = {
+  bg:"#0f0e0c",sur:"#1a1916",sur2:"#232118",bdr:"#2d2b26",bdr2:"#3d3b34",
+  tx:"#f0efe9",tx2:"#9b9890",tx3:"#5a5850",
+  blue:"#60a5fa",blueBg:"#0f1f35",blueBrd:"#1e3a5f",
+  grn:"#4ade80",grnBg:"#0a1f0d",grnBrd:"#14532d",
+  red:"#f87171",redBg:"#1f0a0a",redBrd:"#7f1d1d",
+  amb:"#fbbf24",ambBg:"#1f1500",ambBrd:"#78350f",
+  pur:"#c084fc",purBg:"#150a2a",purBrd:"#4c1d95",
+  cya:"#22d3ee",cyaBg:"#0a1f22",cyaBrd:"#164e63",
+  cod:"#e8e6e0",codBg:"#0d0c0a",codBdr:"#2d2b26",
+  sha:"rgba(0,0,0,0.4)",
+};
+
+const CONCEPTS = [
+  {id:"callby",   emoji:"📦", label:"Call by Value / Ref",    sub:"복사 vs 공유"},
+  {id:"truth",    emoji:"🎯", label:"Source of Truth",         sub:"단일 진실 공급원"},
+  {id:"state",    emoji:"🔄", label:"State Management",        sub:"SwiftUI 상태 속성"},
+  {id:"optional", emoji:"📭", label:"Optional / nil",          sub:"안전한 nil 처리"},
+  {id:"closure",  emoji:"🪤", label:"Closure Capture",         sub:"캡처와 순환참조"},
+  {id:"thread",   emoji:"🧵", label:"Main vs Background",      sub:"UI 스레드의 비밀"},
+  {id:"arc",      emoji:"♻️", label:"ARC 메모리 관리",          sub:"retain count 원리"},
+  {id:"delegate", emoji:"🔔", label:"Delegate Pattern",        sub:"객체 간 통신"},
+  {id:"lifecycle",emoji:"📱", label:"View Lifecycle",          sub:"뷰의 생애주기"},
+  {id:"async",    emoji:"⏳", label:"async/await",             sub:"비동기 코드의 진화"},
+  {id:"arch",     emoji:"🏗",  label:"MVC vs MVVM",            sub:"아키텍처 책임 분리"},
+  {id:"notif",    emoji:"📢", label:"NotificationCenter",      sub:"1:N 방송 패턴"},
+  {id:"protocol", emoji:"🔒", label:"Protocol & DI",           sub:"인터페이스와 의존성 주입"},
+];
+
+// ── GLOBAL CSS ────────────────────────────────────────────────────────────────
+function GS({t}) {
+  return <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:${t.bg};color:${t.tx};font-family:'Noto Sans KR',sans-serif}
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-track{background:${t.bg}}
+    ::-webkit-scrollbar-thumb{background:${t.bdr2};border-radius:3px}
+    .sb{transition:transform .14s cubic-bezier(.34,1.56,.64,1),background .18s,box-shadow .18s,border-color .18s,color .18s,opacity .18s;cursor:pointer}
+    .sb:hover{transform:translateY(-1px) scale(1.025)}
+    .sb:active{transform:scale(.93);transition-duration:.07s}
+    .ct{transition:all .22s cubic-bezier(.34,1.4,.64,1);cursor:pointer}
+    .ct:hover{transform:translateX(4px)}
+    .fs{animation:fs .38s cubic-bezier(.22,1,.36,1) both}
+    @keyframes fs{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+    .pi{animation:pi .42s cubic-bezier(.34,1.56,.64,1) both}
+    @keyframes pi{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+    .sr{animation:sr .4s cubic-bezier(.34,1.4,.64,1) both}
+    @keyframes sr{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
+    .sk{animation:sk .45s cubic-bezier(.36,.07,.19,.97)}
+    @keyframes sk{0%,100%{transform:translateX(0)}15%{transform:translateX(-8px) rotate(-1deg)}30%{transform:translateX(7px)}50%{transform:translateX(-5px)}70%{transform:translateX(4px)}90%{transform:translateX(-2px)}}
+    .pu{animation:pu 1.8s ease-in-out infinite}
+    @keyframes pu{0%,100%{opacity:1}50%{opacity:.5}}
+    .tr *{transition:background .28s ease,color .28s ease,border-color .28s ease,box-shadow .28s ease !important}
+    .mb{border-radius:13px;padding:13px 18px;text-align:center;min-width:100px;transition:all .38s cubic-bezier(.34,1.2,.64,1);border:2px solid transparent}
+    .mb:hover{transform:scale(1.06)}
+    .cb{font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.8;border-radius:14px;padding:16px 18px;white-space:pre;overflow-x:auto}
+    button{font-family:'Noto Sans KR',sans-serif}
+    .tg{display:inline-flex;align-items:center;padding:3px 10px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600}
+    .ts{width:48px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;transition:background .25s cubic-bezier(.34,1.3,.64,1)}
+    .tk{position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:left .25s cubic-bezier(.34,1.5,.64,1)}
+  `}</style>;
+}
+
+// ── SHARED COMPONENTS ─────────────────────────────────────────────────────────
+const KW = new Set(["struct","class","func","var","let","return","if","else","guard","print","self","true","false","nil","weak","in","async","await","actor","@MainActor","@State","@Binding","@ObservedObject","@StateObject","@EnvironmentObject","@Published","@main","body","View","Timer","Task","throws","try","do","catch","override","super","protocol","extension","delegate","required","init","deinit","viewDidLoad","viewWillAppear","viewDidAppear","viewWillDisappear","viewDidDisappear","DispatchQueue","NotificationCenter","ObservableObject"]);
+
+function Code({code,t}) {
+  return (
+    <div className="cb" style={{background:t.codBg,border:`1px solid ${t.codBdr}`,color:t.cod}}>
+      {code.split("\n").map((line,i)=>{
+        if(line.trim().startsWith("//")) return <div key={i} style={{color:t.tx3,fontStyle:"italic"}}>{line}</div>;
+        return <div key={i}>{line.split(/(\b\w[\w.]*\b|@\w+|"[^"]*"|\d+)/).map((p,j)=>{
+          if(KW.has(p)) return <span key={j} style={{color:"#e879f9",fontWeight:600}}>{p}</span>;
+          if(/^"[^"]*"$/.test(p)) return <span key={j} style={{color:"#10b981"}}>{p}</span>;
+          if(/^\d+$/.test(p)) return <span key={j} style={{color:"#f59e0b"}}>{p}</span>;
+          if(/^[A-Z]\w+$/.test(p)&&p.length>1) return <span key={j} style={{color:"#60a5fa"}}>{p}</span>;
+          if(p.startsWith("@")) return <span key={j} style={{color:"#a78bfa"}}>{p}</span>;
+          return p;
+        })}</div>;
+      })}
+    </div>
+  );
+}
+
+function Panel({children,t,style={}}) {
+  return <div style={{background:t.sur,border:`1.5px solid ${t.bdr}`,borderRadius:18,padding:22,display:"flex",flexDirection:"column",gap:14,boxShadow:`0 2px 18px ${t.sha}`,...style}}>{children}</div>;
+}
+
+function Btn({children,t,color,onClick,disabled,full,style:ex={}}) {
+  return <button className="sb" onClick={onClick} disabled={disabled} style={{background:`${color}18`,color,border:`1.5px solid ${color}50`,borderRadius:11,padding:"9px 18px",fontSize:13,fontWeight:600,cursor:disabled?"default":"pointer",opacity:disabled?.4:1,width:full?"100%":"auto",...ex}}>{children}</button>;
+}
+
+function Tag({label,color,bg,brd}) {
+  return <span className="tg" style={{background:bg,color,border:`1px solid ${brd}`}}>{label}</span>;
+}
+
+function MBox({label,value,color,bg,brd,glow}) {
+  return <div className="mb" style={{background:bg,borderColor:brd,boxShadow:glow?`0 0 0 3px ${color}35,0 6px 22px ${color}22`:"none"}}>
+    <div style={{color:"#888",fontSize:10,marginBottom:5,fontFamily:"monospace"}}>{label}</div>
+    <div style={{color,fontFamily:"monospace",fontSize:26,fontWeight:700}}>{value}</div>
+  </div>;
+}
+
+function Grid2({children,t}) {
+  return <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18}}>{children}</div>;
+}
+
+function Arrow({color,dir="→"}) {
+  return <div style={{color,fontSize:22,lineHeight:1}}>{dir}</div>;
+}
+
+function FlowNode({t,color,bg,brd,label,sub,small}) {
+  return <div style={{background:bg,border:`1.5px solid ${brd}`,borderRadius:10,padding:small?"7px 13px":"10px 22px",textAlign:"center"}}>
+    <div style={{color,fontWeight:600,fontSize:small?11:14}}>{label}</div>
+    {sub&&<div style={{color:t.tx3,fontSize:10,fontFamily:"monospace",marginTop:2}}>{sub}</div>}
+  </div>;
+}
+
+function InfoBox({t,color,bg,brd,children}) {
+  return <div className="pi" style={{background:bg,border:`1px solid ${brd}`,borderRadius:11,padding:"11px 14px",color,fontSize:13,lineHeight:1.65}}>{children}</div>;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  DEMOS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// 1. CALL BY VALUE / REF
+function CallByDemo({t}) {
+  const [vs,setVs]=useState(0);
+  const [rs,setRs]=useState(0);
+  const reset=()=>{setVs(0);setRs(0)};
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}><Tag label="struct" color={t.blue} bg={t.blueBg} brd={t.blueBrd}/><span style={{color:t.tx2,fontSize:13}}>값 타입 · 독립 복사본</span></div>
+        <div style={{display:"flex",gap:14,alignItems:"center",justifyContent:"center",minHeight:110}}>
+          <MBox label="원본" value={42} color={t.blue} bg={t.blueBg} brd={t.blueBrd} glow={vs===0}/>
+          {vs>=1&&<><div className="sr" style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><Arrow color={t.blue}/><span style={{color:t.tx3,fontSize:10}}>복사</span></div><div className="sr"><MBox label="복사본" value={vs===2?99:42} color={vs===2?t.red:t.blue} bg={vs===2?t.redBg:t.blueBg} brd={vs===2?t.redBrd:t.blueBrd} glow={vs===1}/></div></>}
+        </div>
+        {vs===2&&<InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>✅ 원본은 여전히 <b>42</b> — 복사본과 독립적!</InfoBox>}
+        <div style={{display:"flex",gap:8}}>
+          {vs===0&&<Btn t={t} color={t.blue} onClick={()=>setVs(1)}>📋 함수에 전달 (복사)</Btn>}
+          {vs===1&&<Btn t={t} color={t.red} onClick={()=>setVs(2)}>복사본을 99로 변경</Btn>}
+          {vs===2&&<Btn t={t} color={t.tx2} onClick={reset}>↺ 리셋</Btn>}
+        </div>
+        <Code t={t} code={`struct Point { var x: Int }
+var a = Point(x: 42)
+var b = a       // 복사!
+b.x = 99
+print(a.x)  // 42 ← 그대로`}/>
+      </Panel>
+      <Panel t={t}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}><Tag label="class" color={t.pur} bg={t.purBg} brd={t.purBrd}/><span style={{color:t.tx2,fontSize:13}}>참조 타입 · 같은 주소</span></div>
+        <div style={{display:"flex",gap:12,alignItems:"center",justifyContent:"center",minHeight:110,flexWrap:"wrap"}}>
+          <div className="mb" style={{background:t.purBg,borderColor:t.purBrd}}><div style={{color:"#888",fontSize:10,marginBottom:4,fontFamily:"monospace"}}>원본 변수</div><div style={{color:t.pur,fontFamily:"monospace",fontSize:11}}>0x7f3a</div></div>
+          <Arrow color={t.pur}/>
+          <MBox label="힙 객체" value={rs===2?99:42} color={rs===2?t.red:t.pur} bg={rs===2?t.redBg:t.purBg} brd={rs===2?t.redBrd:t.purBrd} glow={rs===2}/>
+          {rs>=1&&<><div className="sr"><Arrow color={t.red}/></div><div className="sr"><div className="mb" style={{background:t.redBg,borderColor:t.redBrd}}><div style={{color:"#888",fontSize:10,marginBottom:4,fontFamily:"monospace"}}>함수 내 참조</div><div style={{color:t.red,fontFamily:"monospace",fontSize:11}}>0x7f3a</div></div></div></>}
+        </div>
+        {rs===2&&<InfoBox t={t} color={t.red} bg={t.redBg} brd={t.redBrd}><span className="sk" style={{display:"inline-block"}}>⚠️</span> 원본도 <b>99</b>로 변경! 같은 객체를 가리킴</InfoBox>}
+        <div style={{display:"flex",gap:8}}>
+          {rs===0&&<Btn t={t} color={t.pur} onClick={()=>setRs(1)}>🔗 함수에 전달 (주소 복사)</Btn>}
+          {rs===1&&<Btn t={t} color={t.red} onClick={()=>setRs(2)}>참조로 값을 99로 변경</Btn>}
+          {rs===2&&<Btn t={t} color={t.tx2} onClick={reset}>↺ 리셋</Btn>}
+        </div>
+        <Code t={t} code={`class Point { var x: Int = 42 }
+var a = Point()
+var b = a       // 주소 복사!
+b.x = 99
+print(a.x)  // 99 ← 변경됨!`}/>
+      </Panel>
+    </Grid2>
+  </div>;
+}
+
+// 2. SOURCE OF TRUTH
+function TruthDemo({t}) {
+  const [mode,setMode]=useState("bad");
+  const [text,setText]=useState("안녕하세요");
+  const [vB,setVB]=useState("안녕하세요");
+  const [broken,setBroken]=useState(false);
+  const [synced,setSynced]=useState(false);
+  const reset=()=>{setText("안녕하세요");setVB("안녕하세요");setBroken(false);setSynced(false)};
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+      {[["bad","❌ 분산 상태",t.red],["good","✅ Single Source of Truth",t.grn]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>{setMode(m);reset()}} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    {mode==="bad"?(
+      <Panel t={t}>
+        <p style={{color:t.tx2,fontSize:13,lineHeight:1.7}}>각 View가 <code style={{background:t.sur2,padding:"1px 6px",borderRadius:4,fontFamily:"monospace",fontSize:12}}>@State</code>를 독립 보유 → 한 곳만 바꾸면 불일치 발생</p>
+        <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
+          {[["View A","안녕하세요",false],["View B",vB,broken],["View C","안녕하세요",false]].map(([lbl,val,err])=>(
+            <div key={lbl} className={synced?"pi":""} style={{background:err?t.redBg:t.sur,border:`2px solid ${err?t.red:t.bdr}`,borderRadius:12,padding:"11px 18px",textAlign:"center",minWidth:90,transition:"all .45s cubic-bezier(.34,1.2,.64,1)",boxShadow:err?`0 0 18px ${t.red}20`:""}}><div style={{color:t.tx3,fontSize:10,marginBottom:5}}>{lbl}</div><div style={{color:err?t.red:t.tx,fontFamily:"monospace",fontSize:13,fontWeight:700}}>"{val}"</div></div>
+          ))}
+        </div>
+        {broken&&<InfoBox t={t} color={t.red} bg={t.redBg} brd={t.redBrd}>💥 View B만 <b>"Hello"</b> — A·C는 여전히 <b>"안녕하세요"</b>. 불일치!</InfoBox>}
+        <div style={{display:"flex",gap:8}}>{!broken&&<Btn t={t} color={t.red} onClick={()=>{setVB("Hello");setBroken(true)}}>View B만 "Hello"로 변경</Btn>}<Btn t={t} color={t.tx2} onClick={reset}>↺</Btn></div>
+        <Code t={t} code={`// ❌ 각자 독립 상태
+struct ViewA: View { @State var greeting = "안녕하세요" }
+struct ViewB: View { @State var greeting = "안녕하세요" }
+// 서로 연결 없음 → 동기화 불가`}/>
+      </Panel>
+    ):(
+      <Panel t={t}>
+        <p style={{color:t.tx2,fontSize:13,lineHeight:1.7}}>하나의 <code style={{background:t.sur2,padding:"1px 6px",borderRadius:4,fontFamily:"monospace",fontSize:12}}>@StateObject</code>가 유일한 원천 → 모든 View 자동 갱신</p>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
+          <div style={{background:t.grnBg,border:`2px solid ${t.grnBrd}`,borderRadius:14,padding:"12px 36px",textAlign:"center"}}>
+            <div style={{color:t.tx3,fontSize:11,fontFamily:"monospace",marginBottom:6}}>AppState · @StateObject</div>
+            <div style={{color:t.grn,fontFamily:"monospace",fontSize:22,fontWeight:700,transition:"all .3s"}}>"{text}"</div>
+          </div>
+          <div style={{display:"flex",gap:10}}>
+            {["View A","View B","View C"].map(lbl=>(
+              <div key={lbl} className={synced?"pi":""} style={{background:t.grnBg,border:`2px solid ${t.grnBrd}`,borderRadius:12,padding:"11px 18px",textAlign:"center",minWidth:90,transition:"all .45s cubic-bezier(.34,1.2,.64,1)",boxShadow:synced?`0 0 18px ${t.grn}20`:""}}><div style={{color:t.tx3,fontSize:10,marginBottom:5}}>{lbl}</div><div style={{color:t.grn,fontFamily:"monospace",fontSize:13,fontWeight:700}}>"{text}"</div></div>
+            ))}
+          </div>
+        </div>
+        {synced&&<InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>✅ 단 한 번의 변경으로 <b>모든 View</b>가 동시에 갱신!</InfoBox>}
+        <div style={{display:"flex",gap:8}}>{!synced&&<Btn t={t} color={t.grn} onClick={()=>{setText("Hello");setSynced(true)}}>AppState를 "Hello"로 변경</Btn>}<Btn t={t} color={t.tx2} onClick={reset}>↺</Btn></div>
+        <Code t={t} code={`class AppState: ObservableObject {
+    @Published var greeting = "안녕하세요"
+}
+// 모든 View가 같은 인스턴스 구독
+// @Published 변경 → 전부 자동 갱신!`}/>
+      </Panel>
+    )}
+  </div>;
+}
+
+// 3. STATE MANAGEMENT
+function StateDemo({t}) {
+  const [tab,setTab]=useState("state");
+  const [cnt,setCnt]=useState(0);
+  const [tog,setTog]=useState(false);
+  const tabs={
+    state:{c:t.blue,bg:t.blueBg,brd:t.blueBrd,title:"@State",desc:"View 내부 private 상태. 바뀌면 View 자동 재렌더링."},
+    binding:{c:t.grn,bg:t.grnBg,brd:t.grnBrd,title:"@Binding",desc:"부모의 @State를 자식에 연결. 양방향 데이터 흐름."},
+    observed:{c:t.pur,bg:t.purBg,brd:t.purBrd,title:"@ObservedObject",desc:"외부 ObservableObject 구독. @Published 변경 시 View 갱신."},
+    env:{c:t.amb,bg:t.ambBg,brd:t.ambBrd,title:"@EnvironmentObject",desc:"뷰 계층 전체에 주입. 중간 View 없이 깊은 곳에서 접근 가능."},
+  };
+  const codes={
+    state:`struct CounterView: View {
+    @State private var count = 0
+    var body: some View {
+        Button("탭: \\(count)") {
+            count += 1   // UI 자동 갱신 ✓
+        }
+    }
+}`,binding:`struct Parent: View {
+    @State var isOn = false
+    var body: some View {
+        ToggleView(isOn: $isOn)  // $ = Binding
+    }
+}
+struct ToggleView: View {
+    @Binding var isOn: Bool
+}`,observed:`class ViewModel: ObservableObject {
+    @Published var items: [String] = []
+    func add(_ item: String) {
+        items.append(item)  // 자동 알림 ✓
+    }
+}
+struct MyView: View {
+    @ObservedObject var vm = ViewModel()
+}`,env:`@main struct MyApp: App {
+    var body: some Scene {
+        WindowGroup {
+            RootView()
+                .environmentObject(AppState())
+        }
+    }
+}
+struct DeepView: View {
+    @EnvironmentObject var state: AppState
+}`,};
+  const a=tabs[tab];
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:18}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+      {Object.entries(tabs).map(([k,v])=>(
+        <button key={k} className="sb" onClick={()=>{setTab(k);setCnt(0);setTog(false)}} style={{padding:"8px 14px",borderRadius:10,border:`1.5px solid ${tab===k?v.c:t.bdr}`,background:tab===k?v.bg:"transparent",color:tab===k?v.c:t.tx2,fontFamily:"IBM Plex Mono,monospace",fontSize:12,fontWeight:600}}>{v.title}</button>
+      ))}
+    </div>
+    <div key={tab} className="fs"><Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{textAlign:"center"}}><span className="tg" style={{background:a.bg,color:a.c,border:`1px solid ${a.brd}`,fontSize:15,padding:"6px 18px"}}>{a.title}</span><p style={{color:t.tx2,fontSize:13,marginTop:12,lineHeight:1.7}}>{a.desc}</p></div>
+        {tab==="state"&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
+          <div style={{background:a.bg,border:`2px solid ${a.brd}`,borderRadius:14,padding:"18px 32px",textAlign:"center",width:"100%"}}>
+            <div style={{color:t.tx3,fontSize:11,fontFamily:"monospace",marginBottom:8}}>CounterView</div>
+            <div style={{color:t.tx3,fontSize:12,fontFamily:"monospace",marginBottom:12}}>@State count = <span style={{color:a.c,fontWeight:700,fontSize:22}}>{cnt}</span></div>
+            <button className="sb" onClick={()=>setCnt(c=>c+1)} style={{background:a.c,color:"#fff",border:"none",borderRadius:12,padding:"12px 28px",fontSize:16,fontWeight:700,cursor:"pointer",boxShadow:`0 5px 16px ${a.c}45`}}>탭: {cnt}</button>
+          </div>
+          <div style={{color:t.tx3,fontSize:12}}>↑ 직접 눌러보세요!</div>
+        </div>}
+        {tab==="binding"&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
+          <FlowNode t={t} color={a.c} bg={a.bg} brd={a.brd} label="Parent View" sub="@State var isOn"/>
+          <div style={{display:"flex",alignItems:"center",gap:6}}><span style={{color:a.c,fontSize:24}}>↕</span><span style={{color:t.tx3,fontSize:11,fontFamily:"monospace"}}>$isOn (Binding)</span></div>
+          <FlowNode t={t} color={a.c} bg={a.bg} brd={a.brd} label="Child View" sub="@Binding var isOn"/>
+          <div style={{display:"flex",alignItems:"center",gap:12,marginTop:6}}>
+            <button className="ts sb" onClick={()=>setTog(v=>!v)} style={{background:tog?a.c:t.bdr2}}><div className="tk" style={{left:tog?25:3}}/></button>
+            <span style={{color:t.tx2,fontSize:13,fontFamily:"monospace"}}>isOn = <b style={{color:a.c}}>{tog?"true":"false"}</b></span>
+          </div>
+          <div style={{color:t.tx3,fontSize:12}}>직접 토글해보세요</div>
+        </div>}
+        {tab==="observed"&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
+          <FlowNode t={t} color={a.c} bg={a.bg} brd={a.brd} label="ViewModel" sub="ObservableObject"/>
+          <span style={{color:a.c,fontSize:12,fontFamily:"monospace"}}>@Published 변경 →</span>
+          <div style={{display:"flex",gap:10}}>{["View A","View B","View C"].map(l=><FlowNode key={l} t={t} color={a.c} bg={a.bg} brd={a.brd} label={l} sub="@ObservedObject" small/>)}</div>
+          <div style={{color:t.tx3,fontSize:12}}>구독 중인 모든 View 자동 갱신</div>
+        </div>}
+        {tab==="env"&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+          <FlowNode t={t} color={a.c} bg={a.bg} brd={a.brd} label="App Root" sub=".environmentObject(state)"/>
+          {["ParentView","ChildView"].map(l=><><span key={l+"a"} style={{color:t.tx3,fontSize:18}}>↓</span><FlowNode key={l} t={t} color={t.tx3} bg={t.sur2} brd={t.bdr} label={l} sub="(그냥 통과)" small/></>)}
+          <span style={{color:t.tx3,fontSize:18}}>↓</span>
+          <FlowNode t={t} color={a.c} bg={a.bg} brd={a.brd} label="DeepView" sub="@EnvironmentObject"/>
+          <div style={{color:t.tx3,fontSize:12}}>중간 없이 바로 접근</div>
+        </div>}
+      </Panel>
+      <Code t={t} code={codes[tab]}/>
+    </Grid2></div>
+  </div>;
+}
+
+// 4. OPTIONAL
+function OptionalDemo({t}) {
+  const [has,setHas]=useState(false);
+  const [mode,setMode]=useState("guard");
+  const [crashed,setCrashed]=useState(false);
+  const [sk,setSk]=useState(0);
+  const mi={guard:{l:"guard let",c:t.grn,bg:t.grnBg,brd:t.grnBrd},iflet:{l:"if let",c:t.blue,bg:t.blueBg,brd:t.blueBrd},nil:{l:"?? 병합",c:t.amb,bg:t.ambBg,brd:t.ambBrd},force:{l:"! 강제",c:t.red,bg:t.redBg,brd:t.redBrd}};
+  const codes={guard:`func greet(_ name: String?) {
+    guard let name = name else {
+        print("이름 없음")
+        return   // 조기 종료
+    }
+    print("안녕, \\(name)!")  // 확실히 존재
+}`,iflet:`func greet(_ name: String?) {
+    if let name = name {
+        print("안녕, \\(name)!")
+    } else {
+        print("이름 없음")
+    }
+}`,nil:`let name: String? = nil
+
+let display = name ?? "익명"
+print(display)   // "익명"
+
+// 체이닝
+let result = name ?? user.name ?? "손님"`,force:`let name: String? = nil
+
+print(name!)
+// 💥 Fatal error:
+// Unexpectedly found nil while
+// unwrapping an Optional value`};
+  const am=mi[mode];
+  return <div className="fs"><Grid2 t={t}>
+    <Panel t={t}>
+      <div style={{textAlign:"center"}}>
+        <div style={{color:t.tx3,fontSize:11,fontFamily:"monospace",marginBottom:14}}>Optional&lt;String&gt;</div>
+        <button className="sb" onClick={()=>{setHas(v=>!v);setCrashed(false)}} style={{background:"none",border:"none",padding:0,cursor:"pointer"}}>
+          <div style={{width:148,height:148,borderRadius:"50%",margin:"0 auto",border:`3px solid ${has?t.grn:t.red}`,background:has?t.grnBg:t.redBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",transition:"all .45s cubic-bezier(.34,1.3,.64,1)",boxShadow:has?`0 0 32px ${t.grn}25,0 0 0 4px ${t.grn}15`:`0 0 32px ${t.red}25,0 0 0 4px ${t.red}15`,cursor:"pointer"}}>
+            <div style={{fontSize:36,transition:"all .4s cubic-bezier(.34,1.5,.64,1)",transform:has?"scale(1)":"scale(.75) rotate(-10deg)"}}>{has?"📦":"💨"}</div>
+            <div style={{color:has?t.grn:t.red,fontFamily:"monospace",fontSize:15,fontWeight:700,marginTop:8,transition:"all .3s"}}>{has?'"Leeo"':"nil"}</div>
+            <div style={{color:t.tx3,fontSize:10,marginTop:3}}>{has?".some(value)":".none"}</div>
+          </div>
+        </button>
+        <div style={{color:t.tx3,fontSize:12,marginTop:12}}>↑ 눌러서 nil ↔ 값 전환</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        {Object.entries(mi).map(([k,v])=>(
+          <button key={k} className="sb" onClick={()=>{setMode(k);setCrashed(false)}} style={{padding:"9px 6px",borderRadius:10,border:`1.5px solid ${mode===k?v.c:t.bdr}`,background:mode===k?v.bg:"transparent",color:mode===k?v.c:t.tx2,fontFamily:"IBM Plex Mono,monospace",fontSize:11,fontWeight:600}}>{v.l}</button>
+        ))}
+      </div>
+      {mode==="force"&&<button className="sb" disabled={has} onClick={()=>{if(!has){setCrashed(true);setSk(k=>k+1)}}} style={{width:"100%",padding:"10px",borderRadius:11,background:has?t.sur2:t.redBg,color:has?t.tx3:t.red,border:`1px solid ${has?t.bdr:t.redBrd}`,fontSize:13,fontWeight:600,cursor:has?"default":"pointer"}}>{has?"값이 있어 안전 (nil로 바꿔보세요)":"💥 강제 언래핑 실행"}</button>}
+    </Panel>
+    <div style={{display:"flex",flexDirection:"column",gap:12}}>
+      <div className="fs" key={mode}><Code t={t} code={codes[mode]}/></div>
+      {crashed&&<div key={sk} className="pi sk" style={{background:t.redBg,border:`2px solid ${t.red}`,borderRadius:14,padding:"16px 18px",color:t.red,fontFamily:"monospace",fontSize:12,lineHeight:1.8}}><b>💥 Fatal error:</b> Unexpectedly found nil<br/>while unwrapping an Optional value<br/><span style={{color:t.tx3,fontSize:11}}>앱 즉시 종료. ! 는 100% 확신할 때만!</span></div>}
+    </div>
+  </Grid2></div>;
+}
+
+// 5. CLOSURE CAPTURE
+function ClosureDemo({t}) {
+  const [cnt,setCnt]=useState(0);
+  const [cap,setCap]=useState(null);
+  const [mode,setMode]=useState("strong");
+  const [ls,setLs]=useState(0);
+  return <div className="fs"><Grid2 t={t}>
+    <Panel t={t}>
+      <div style={{fontWeight:600,fontSize:15}}>클로저 캡처 시뮬레이션</div>
+      <div style={{background:t.purBg,border:`1.5px solid ${t.purBrd}`,borderRadius:14,padding:16}}>
+        <div style={{color:t.tx3,fontSize:10,fontFamily:"monospace",marginBottom:10}}>외부 스코프</div>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <div style={{fontFamily:"monospace",fontSize:14}}>counter = <span style={{color:t.pur,fontWeight:700,fontSize:24,transition:"all .25s"}}>{cnt}</span></div>
+          <button className="sb" onClick={()=>setCnt(c=>c+1)} style={{background:t.pur,color:"#fff",border:"none",borderRadius:10,padding:"8px 18px",fontSize:18,fontWeight:700,cursor:"pointer",boxShadow:`0 4px 14px ${t.pur}40`}}>+1</button>
+        </div>
+      </div>
+      <Btn t={t} color={t.blue} onClick={()=>setCap(cnt)} full>📸 클로저 생성 — 지금 값 캡처</Btn>
+      {cap!==null&&<div className="pi" style={{background:t.blueBg,border:`2px solid ${t.blueBrd}`,borderRadius:14,padding:16}}>
+        <div style={{color:t.tx3,fontSize:10,fontFamily:"monospace",marginBottom:8}}>클로저 내부 (캡처된 스냅샷)</div>
+        <div style={{fontFamily:"monospace",fontSize:14}}>counter = <span style={{color:t.blue,fontWeight:700,fontSize:24}}>{cap}</span></div>
+        <div style={{color:t.tx3,fontSize:12,marginTop:10,lineHeight:1.6}}>외부가 <b style={{color:t.tx}}>{cnt}</b>로 바뀌어도 클로저는 캡처 당시의 <b style={{color:t.blue}}>{cap}</b>을 기억</div>
+      </div>}
+      <Btn t={t} color={t.tx2} onClick={()=>{setCnt(0);setCap(null)}}>↺ 리셋</Btn>
+    </Panel>
+    <Panel t={t}>
+      <div style={{display:"flex",gap:8}}>
+        {[["strong","⚠ 강한 참조"],["weak","✅ weak self"]].map(([m,l])=>(
+          <button key={m} className="sb" onClick={()=>{setMode(m);setLs(0)}} style={{flex:1,padding:"9px",borderRadius:10,border:`1.5px solid ${mode===m?(m==="strong"?t.red:t.grn):t.bdr}`,background:mode===m?(m==="strong"?t.redBg:t.grnBg):"transparent",color:mode===m?(m==="strong"?t.red:t.grn):t.tx2,fontSize:12,fontWeight:600}}>{l}</button>
+        ))}
+      </div>
+      {mode==="strong"?(
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:16}}>
+            {[["📦","ViewModel"],["⏰","Timer"]].map(([ic,lbl],i)=>(
+              <div key={lbl} className={ls>=1?"pu":""} style={{background:ls>=1?t.redBg:t.sur2,border:`2px solid ${ls>=1?t.red:t.bdr}`,borderRadius:14,padding:"14px 16px",textAlign:"center",transition:"all .4s cubic-bezier(.34,1.2,.64,1)"}}>
+                <div style={{fontSize:26}}>{ic}</div>
+                <div style={{fontFamily:"monospace",fontSize:12,color:ls>=1?t.red:t.tx2,marginTop:4}}>{lbl}</div>
+                {ls>=2&&<div className="pi" style={{color:t.red,fontSize:10,marginTop:4}}>해제 불가!</div>}
+              </div>
+            ))}
+          </div>
+          {ls===0&&<Btn t={t} color={t.red} onClick={()=>setLs(1)} full>순환 참조 발생</Btn>}
+          {ls===1&&<Btn t={t} color={t.red} onClick={()=>setLs(2)} full>ViewModel 해제 시도</Btn>}
+          {ls>=2&&<><div className="pi sk" style={{background:t.redBg,border:`1px solid ${t.redBrd}`,borderRadius:11,padding:"10px",color:t.red,fontSize:13,textAlign:"center"}}>💀 서로 잡고 있어 둘 다 해제 불가 → 메모리 누수!</div><Btn t={t} color={t.tx2} onClick={()=>setLs(0)}>↺</Btn></>}
+          <Code t={t} code={`Timer.scheduledTimer(...) { _ in
+    print(self.name)  // 강한 참조!
+    // ViewModel ↔ Timer 순환 참조`}/>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>✅ ViewModel 해제 시 self가 nil → 순환 참조 없음</InfoBox>
+          <Code t={t} code={`Timer.scheduledTimer(...) {
+    [weak self] _ in
+    guard let self = self else {
+        return  // 해제됐으면 종료
+    }
+    print(self.name)  // 안전!`}/>
+        </div>
+      )}
+    </Panel>
+  </Grid2></div>;
+}
+
+// 6. MAIN THREAD vs BACKGROUND
+function ThreadDemo({t}) {
+  const [step,setStep]=useState(0);
+  const [progress,setProgress]=useState(0);
+  const [uiBlocked,setUiBlocked]=useState(false);
+  const [count,setCount]=useState(0);
+  const [running,setRunning]=useState(false);
+  const timerRef=useRef(null);
+
+  const runBad=()=>{
+    setUiBlocked(true);setStep(1);setProgress(0);
+    // simulate blocking
+    let p=0;
+    const iv=setInterval(()=>{p+=10;setProgress(p);if(p>=100){clearInterval(iv);setUiBlocked(false);setStep(2);}},200);
+  };
+  const runGood=()=>{
+    setStep(3);setProgress(0);setRunning(true);
+    let p=0;
+    const iv=setInterval(()=>{p+=10;setProgress(p);if(p>=100){clearInterval(iv);setRunning(false);setStep(4);}},200);
+  };
+  const reset=()=>{setStep(0);setProgress(0);setUiBlocked(false);setCount(0);setRunning(false)};
+
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+      {[["bad","❌ 메인 스레드 차단",t.red],["good","✅ 백그라운드 활용",t.grn]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>{reset();if(m==="bad")setTimeout(runBad,100);else setTimeout(runGood,100)}}>{l}</Btn>
+      ))}
+      <Btn t={t} color={t.tx2} onClick={reset}>↺</Btn>
+    </div>
+
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14,marginBottom:4}}>스레드 시각화</div>
+        {/* Main thread lane */}
+        <div style={{background:t.sur2,borderRadius:12,padding:14}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+            <div style={{width:10,height:10,borderRadius:"50%",background:step===1||uiBlocked?t.red:t.grn,boxShadow:`0 0 8px ${step===1||uiBlocked?t.red:t.grn}60`}}/>
+            <span style={{color:t.tx2,fontSize:12,fontWeight:600}}>Main Thread (UI)</span>
+          </div>
+          <div style={{background:t.bdr,borderRadius:8,height:28,overflow:"hidden",marginBottom:8}}>
+            <div style={{height:"100%",display:"flex",alignItems:"center"}}>
+              {/* UI work blocks */}
+              {[...Array(5)].map((_,i)=>(
+                <div key={i} style={{flex:1,height:"100%",background:step===1&&i===2?`${t.red}90`:`${t.blue}60`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",borderRight:`1px solid ${t.bdr2}`,transition:"all .3s"}}>
+                  {step===1&&i===2?"🔴차단":"UI"}
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Counter button - blocked when step=1 */}
+          <button className="sb" onClick={()=>{if(!uiBlocked)setCount(c=>c+1)}} style={{background:uiBlocked?t.redBg:t.blueBg,color:uiBlocked?t.red:t.blue,border:`1px solid ${uiBlocked?t.redBrd:t.blueBrd}`,borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:uiBlocked?"not-allowed":"pointer",opacity:uiBlocked?.5:1}}>
+            {uiBlocked?"🚫 UI 응답 불가":"카운터: "+count}
+          </button>
+          {uiBlocked&&<div style={{color:t.red,fontSize:11,marginTop:6}}>메인 스레드가 네트워크 작업으로 막혀있음!</div>}
+          {step===4&&<div style={{color:t.grn,fontSize:11,marginTop:6}}>✅ 메인 스레드는 항상 살아있어 카운터 가능!</div>}
+        </div>
+
+        {/* Background thread */}
+        {(step===3||step===4||running)&&(
+          <div className="pi" style={{background:t.sur2,borderRadius:12,padding:14}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+              <div style={{width:10,height:10,borderRadius:"50%",background:running?t.amb:t.grn,boxShadow:`0 0 8px ${running?t.amb:t.grn}60`}}/>
+              <span style={{color:t.tx2,fontSize:12,fontWeight:600}}>Background Thread</span>
+            </div>
+            <div style={{background:t.bdr,borderRadius:8,height:28,overflow:"hidden"}}>
+              <div style={{width:`${progress}%`,height:"100%",background:`linear-gradient(90deg,${t.amb},${t.grn})`,transition:"width .2s",display:"flex",alignItems:"center",paddingLeft:8}}>
+                <span style={{color:"#fff",fontSize:10,whiteSpace:"nowrap"}}>네트워크 요청 중... {progress}%</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step===1&&(
+          <div style={{background:t.bdr,borderRadius:8,height:28,overflow:"hidden",marginTop:4}}>
+            <div style={{width:`${progress}%`,height:"100%",background:`linear-gradient(90deg,${t.red},${t.amb})`,transition:"width .2s",display:"flex",alignItems:"center",paddingLeft:8}}>
+              <span style={{color:"#fff",fontSize:10}}>메인에서 작업중... {progress}%</span>
+            </div>
+          </div>
+        )}
+      </Panel>
+
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// ❌ 메인 스레드에서 네트워크 요청
+func fetchBad() {
+    let data = URLSession.shared
+        .data(from: url)  // 블로킹!
+    // UI가 완전히 멈춤 😱
+}
+
+// ✅ 백그라운드 → 메인 스레드
+func fetchGood() async {
+    let data = await URLSession.shared
+        .data(from: url)  // 백그라운드
+    await MainActor.run {
+        self.updateUI(data)  // UI는 메인
+    }
+}`}/>
+        <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>
+          📌 <b>황금 법칙</b>: UI 업데이트는 항상 Main Thread에서.<br/>
+          무거운 작업(네트워크, 파일, 연산)은 Background Thread에서.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 7. ARC
+function ArcDemo({t}) {
+  const [objects,setObjects]=useState([]);
+  const [id,setId]=useState(1);
+  const addObj=()=>{setObjects(o=>[...o,{id:id,rc:1,name:`Object\u00A0${id}`}]);setId(i=>i+1)};
+  const addRef=(objId)=>setObjects(o=>o.map(x=>x.id===objId?{...x,rc:x.rc+1}:x));
+  const removeRef=(objId)=>setObjects(o=>{const next=o.map(x=>x.id===objId?{...x,rc:x.rc-1}:x);return next.filter(x=>x.rc>0)});
+  const reset=()=>{setObjects([]);setId(1)};
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+      <Btn t={t} color={t.blue} onClick={addObj}>+ 객체 생성</Btn>
+      <Btn t={t} color={t.tx2} onClick={reset}>↺ 초기화</Btn>
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>힙 메모리 영역</div>
+        {objects.length===0&&<div style={{color:t.tx3,fontSize:13,textAlign:"center",padding:"20px 0"}}>객체가 없음 — "객체 생성"을 눌러보세요</div>}
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {objects.map(obj=>{
+            const pct=Math.min(obj.rc/5,1);
+            const barColor=obj.rc>=3?t.red:obj.rc>=2?t.amb:t.grn;
+            return <div key={obj.id} className="pi" style={{background:t.sur2,border:`1.5px solid ${barColor}60`,borderRadius:12,padding:14}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <span style={{fontFamily:"monospace",fontSize:13,fontWeight:600}}>{obj.name}</span>
+                <span style={{color:barColor,fontFamily:"monospace",fontSize:13,fontWeight:700}}>RC: {obj.rc}</span>
+              </div>
+              <div style={{background:t.bdr,borderRadius:6,height:8,marginBottom:10}}>
+                <div style={{width:`${pct*100}%`,height:"100%",background:barColor,borderRadius:6,transition:"all .4s cubic-bezier(.34,1.2,.64,1)"}}/>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button className="sb" onClick={()=>addRef(obj.id)} style={{background:t.blueBg,color:t.blue,border:`1px solid ${t.blueBrd}`,borderRadius:8,padding:"5px 12px",fontSize:12,fontWeight:600}}>+ 참조 추가</button>
+                <button className="sb" onClick={()=>removeRef(obj.id)} style={{background:t.redBg,color:t.red,border:`1px solid ${t.redBrd}`,borderRadius:8,padding:"5px 12px",fontSize:12,fontWeight:600}}>- 참조 해제</button>
+              </div>
+              {obj.rc===1&&<div style={{color:t.grn,fontSize:11,marginTop:6}}>🟢 RC=1 · 살아있음</div>}
+              {obj.rc>=3&&<div style={{color:t.red,fontSize:11,marginTop:6}}>🔴 참조가 많음 — 의도한 설계인지 확인!</div>}
+            </div>;
+          })}
+        </div>
+        {objects.some(o=>o.rc<=0)&&<InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>✅ RC=0 → ARC가 자동으로 메모리 해제!</InfoBox>}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`class Dog {
+    var name: String
+    init(_ name: String) {
+        self.name = name
+        print("\\(name) 생성됨")  // RC: 1
+    }
+    deinit {
+        print("\\(name) 해제됨")  // RC: 0
+    }
+}
+
+var dog1: Dog? = Dog("멍멍")  // RC: 1
+var dog2 = dog1              // RC: 2
+dog1 = nil                   // RC: 1
+dog2 = nil                   // RC: 0 → 해제!`}/>
+        <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>
+          <b>ARC (Automatic Reference Counting)</b><br/>
+          참조 횟수(RC)가 0이 되는 순간 메모리 자동 해제.<br/>
+          직접 malloc/free 없이 안전하게 관리.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 8. DELEGATE
+function DelegateDemo({t}) {
+  const [step,setStep]=useState(0);
+  const [msgs,setMsgs]=useState([]);
+  const addMsg=(m,c)=>setMsgs(p=>[...p,{m,c,id:Date.now()+Math.random()}]);
+  const run=()=>{
+    setStep(0);setMsgs([]);
+    setTimeout(()=>{setStep(1);addMsg("1️⃣ UITextField: 사용자가 키 입력 감지",t.blue)},300);
+    setTimeout(()=>{setStep(2);addMsg("2️⃣ delegate?.textFieldDidChange() 호출",t.amb)},900);
+    setTimeout(()=>{setStep(3);addMsg("3️⃣ ViewController (delegate) 메서드 실행",t.grn)},1600);
+    setTimeout(()=>{setStep(4);addMsg("4️⃣ UI 업데이트 완료!",t.pur)},2300);
+  };
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14,marginBottom:4}}>Delegate 통신 흐름</div>
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {[
+            {label:"UITextField",sub:"이벤트 발생",color:t.blue,bg:t.blueBg,brd:t.blueBrd,active:step>=1},
+            {label:"delegate 프로퍼티",sub:"약한 참조로 보유",color:t.amb,bg:t.ambBg,brd:t.ambBrd,active:step>=2},
+            {label:"ViewController",sub:"UITextFieldDelegate 채택",color:t.grn,bg:t.grnBg,brd:t.grnBrd,active:step>=3},
+          ].map((n,i)=>(
+            <div key={i}>
+              <div className={n.active?"pi":""} style={{background:n.active?n.bg:t.sur2,border:`2px solid ${n.active?n.brd:t.bdr}`,borderRadius:12,padding:"12px 16px",transition:"all .4s cubic-bezier(.34,1.2,.64,1)"}}>
+                <div style={{color:n.active?n.color:t.tx2,fontWeight:600,fontSize:13}}>{n.label}</div>
+                <div style={{color:t.tx3,fontSize:11,marginTop:3}}>{n.sub}</div>
+              </div>
+              {i<2&&<div style={{color:step>=i+2?[t.blue,t.amb][i]:t.bdr2,textAlign:"center",fontSize:20,margin:"4px 0",transition:"color .4s"}}>↓</div>}
+            </div>
+          ))}
+        </div>
+        <div style={{background:t.sur2,borderRadius:12,padding:12,minHeight:80}}>
+          {msgs.map(m=><div key={m.id} className="pi" style={{color:m.c,fontSize:12,marginBottom:4}}>{m.m}</div>)}
+          {msgs.length===0&&<div style={{color:t.tx3,fontSize:12}}>시뮬레이션을 시작하세요</div>}
+        </div>
+        <Btn t={t} color={t.blue} onClick={run} full>▶ 델리게이트 통신 시뮬레이션</Btn>
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// 1. 프로토콜 정의 (계약서)
+protocol TextFieldDelegate: AnyObject {
+    func textFieldDidChange(_ text: String)
+}
+
+// 2. 이벤트 발생 객체
+class UITextField {
+    weak var delegate: TextFieldDelegate?
+
+    func userTyped(_ text: String) {
+        // 위임! 구현은 delegate에게
+        delegate?.textFieldDidChange(text)
+    }
+}
+
+// 3. 위임받은 객체가 구현
+class ViewController: TextFieldDelegate {
+    func textFieldDidChange(_ text: String) {
+        print("입력됨: \\(text)")
+        updateUI(text)
+    }
+}`}/>
+        <InfoBox t={t} color={t.pur} bg={t.purBg} brd={t.purBrd}>
+          <b>핵심</b>: UITextField는 ViewController를 직접 모름.<br/>
+          프로토콜(계약)만 알고 → 낮은 결합도, 높은 재사용성
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 9. VIEW LIFECYCLE
+function LifecycleDemo({t}) {
+  const [phase,setPhase]=useState(-1);
+  const [auto,setAuto]=useState(false);
+  const timerRef=useRef(null);
+  const phases=[
+    {name:"init",label:"초기화",sub:"ViewController 객체 생성",color:t.blue,bg:t.blueBg,brd:t.blueBrd,code:"init(coder:) 호출\n뷰 계층 아직 없음"},
+    {name:"viewDidLoad",label:"viewDidLoad",sub:"뷰 계층 메모리 로드 완료",color:t.grn,bg:t.grnBg,brd:t.grnBrd,code:"viewDidLoad()\n→ API 호출, 초기 설정"},
+    {name:"viewWillAppear",label:"viewWillAppear",sub:"화면 나타나기 직전",color:t.amb,bg:t.ambBg,brd:t.ambBrd,code:"viewWillAppear(_:)\n→ 애니메이션 준비"},
+    {name:"viewDidAppear",label:"viewDidAppear",sub:"화면 완전히 표시됨",color:t.pur,bg:t.purBg,brd:t.purBrd,code:"viewDidAppear(_:)\n→ 타이머 시작, 추적"},
+    {name:"viewWillDisappear",label:"viewWillDisappear",sub:"화면 사라지기 직전",color:t.amb,bg:t.ambBg,brd:t.ambBrd,code:"viewWillDisappear(_:)\n→ 타이머 정지"},
+    {name:"viewDidDisappear",label:"viewDidDisappear",sub:"화면 완전히 사라짐",color:t.red,bg:t.redBg,brd:t.redBrd,code:"viewDidDisappear(_:)\n→ 리소스 정리"},
+    {name:"deinit",label:"deinit",sub:"메모리에서 해제",color:t.tx3,bg:t.sur2,brd:t.bdr2,code:"deinit\n→ ARC RC=0, 해제"},
+  ];
+  const next=()=>setPhase(p=>Math.min(p+1,phases.length-1));
+  const prev=()=>setPhase(p=>Math.max(p-1,0));
+  const resetP=()=>{setPhase(-1);setAuto(false);clearInterval(timerRef.current)};
+  useEffect(()=>{
+    if(auto){timerRef.current=setInterval(()=>setPhase(p=>{if(p>=phases.length-1){clearInterval(timerRef.current);setAuto(false);return p;}return p+1;}),900);}
+    return()=>clearInterval(timerRef.current);
+  },[auto]);
+  const cur=phase>=0?phases[phase]:null;
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+      <Btn t={t} color={t.blue} onClick={()=>{resetP();setTimeout(()=>setPhase(0),50)}}>▶ 처음부터</Btn>
+      <Btn t={t} color={t.grn} onClick={()=>setAuto(v=>!v)} style={{opacity:auto?1:.6}}>{auto?"⏸ 일시정지":"▶▶ 자동 재생"}</Btn>
+      <Btn t={t} color={t.tx2} onClick={prev} disabled={phase<=0}>◀ 이전</Btn>
+      <Btn t={t} color={t.blue} onClick={next} disabled={phase>=phases.length-1}>다음 ▶</Btn>
+      <Btn t={t} color={t.tx2} onClick={resetP}>↺</Btn>
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14,marginBottom:4}}>생애주기 타임라인</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {phases.map((p,i)=>(
+            <div key={i} className={phase===i?"pi":""} style={{background:phase===i?p.bg:phase>i?`${p.bg}80`:t.sur2,border:`1.5px solid ${phase===i?p.brd:phase>i?`${p.brd}60`:t.bdr}`,borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,transition:"all .35s cubic-bezier(.34,1.2,.64,1)"}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:phase>=i?p.color:t.bdr2,flexShrink:0,transition:"background .3s"}}/>
+              <div>
+                <div style={{color:phase===i?p.color:phase>i?p.color:t.tx2,fontFamily:"monospace",fontSize:12,fontWeight:600}}>{p.label}</div>
+                <div style={{color:t.tx3,fontSize:10,marginTop:2}}>{p.sub}</div>
+              </div>
+              {phase===i&&<div style={{marginLeft:"auto",color:p.color,fontSize:14}}>◀ 지금</div>}
+            </div>
+          ))}
+        </div>
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        {cur?<>
+          <div className="pi" style={{background:cur.bg,border:`2px solid ${cur.brd}`,borderRadius:14,padding:16}}>
+            <div style={{color:cur.color,fontFamily:"monospace",fontSize:16,fontWeight:700,marginBottom:8}}>{cur.label}()</div>
+            <div style={{color:t.tx2,fontSize:13,lineHeight:1.7}}>{cur.sub}</div>
+            <div style={{background:t.codBg,borderRadius:8,padding:"10px 12px",fontFamily:"monospace",fontSize:12,color:t.cod,marginTop:10,whiteSpace:"pre"}}>{cur.code}</div>
+          </div>
+        </>:<div style={{color:t.tx3,fontSize:13,textAlign:"center",padding:"20px 0"}}>▶ 시작을 눌러 생애주기를 탐험하세요</div>}
+        <Code t={t} code={`class MyViewController: UIViewController {
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        // 한 번만 호출 → 초기 설정
+        setupUI(); fetchData()
+    }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // 화면마다 호출 → 데이터 갱신
+        refreshData()
+    }
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        timer?.invalidate()  // 리소스 정리
+    }
+}`}/>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 10. ASYNC/AWAIT
+function AsyncDemo({t}) {
+  const [mode,setMode]=useState("callback");
+  const [step,setStep]=useState(-1);
+  const [running,setRunning]=useState(false);
+  const simulate=()=>{
+    setRunning(true);setStep(0);
+    const delays=mode==="callback"?[600,1200,1800,2400]:[600,1100,1600,2100];
+    delays.forEach((d,i)=>setTimeout(()=>{setStep(i+1);if(i===3)setRunning(false)},d));
+  };
+  const callbackSteps=["fetchUser() 호출","✅ user 수신 → fetchProfile(user) 호출","✅ profile 수신 → fetchFeed(profile) 호출","✅ feed 수신 → UI 업데이트 완료"];
+  const asyncSteps=["await fetchUser() — 일시 정지","user 수신 → await fetchProfile(user)","profile 수신 → await fetchFeed(profile)","feed 수신 → updateUI(feed) 완료"];
+  const steps=mode==="callback"?callbackSteps:asyncSteps;
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+      {[["callback","❌ 콜백 지옥",t.red],["async","✅ async/await",t.grn]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>{setMode(m);setStep(-1);setRunning(false)}} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14,marginBottom:4}}>실행 흐름 시뮬레이션</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {steps.map((s,i)=>(
+            <div key={i} className={step===i+1?"pi":""} style={{background:step>i?(mode==="callback"?`${t.redBg}`:`${t.grnBg}`):step===i+1?(mode==="callback"?t.redBg:t.grnBg):t.sur2,border:`1.5px solid ${step>i||step===i+1?(mode==="callback"?t.redBrd:t.grnBrd):t.bdr}`,borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,transition:"all .35s cubic-bezier(.34,1.2,.64,1)"}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:step>i?(mode==="callback"?t.red:t.grn):step===i+1?(mode==="callback"?t.amb:t.blue):t.bdr2,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,transition:"all .3s"}}>{step>i?"✓":i+1}</div>
+              <span style={{color:step===i+1?t.tx:t.tx2,fontSize:12,lineHeight:1.5}}>{s}</span>
+              {step===i+1&&running&&<div className="pu" style={{marginLeft:"auto",color:t.amb,fontSize:14}}>⏳</div>}
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:8,marginTop:4}}>
+          <Btn t={t} color={mode==="callback"?t.red:t.grn} onClick={simulate} disabled={running} full>{running?"실행 중...":"▶ 시뮬레이션 시작"}</Btn>
+          <Btn t={t} color={t.tx2} onClick={()=>{setStep(-1);setRunning(false)}}>↺</Btn>
+        </div>
+      </Panel>
+      <div className="fs" key={mode}>
+        <Code t={t} code={mode==="callback"?`// ❌ 콜백 지옥 (Pyramid of Doom)
+fetchUser { user in
+    fetchProfile(user) { profile in
+        fetchFeed(profile) { feed in
+            updateUI(feed) // 3단 중첩!
+            // 에러 처리는 더 복잡해짐...
+        }
+    }
+}`:
+`// ✅ async/await - 읽기 쉬운 직선 코드
+func loadContent() async throws {
+    let user    = try await fetchUser()
+    let profile = try await fetchProfile(user)
+    let feed    = try await fetchFeed(profile)
+    updateUI(feed)
+    // 에러는 throws로 깔끔하게!
+}`}/>
+        <div style={{marginTop:14}}><InfoBox t={t} color={mode==="async"?t.grn:t.red} bg={mode==="async"?t.grnBg:t.redBg} brd={mode==="async"?t.grnBrd:t.redBrd}>
+          {mode==="async"?"✅ await는 스레드를 차단하지 않고 일시 정지만 함.\n다른 작업이 그 사이 실행 가능 → 효율적!":"❌ 콜백이 깊어질수록 가독성↓, 에러 처리↓, 유지보수↓"}
+        </InfoBox></div>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 11. MVC vs MVVM
+function ArchDemo({t}) {
+  const [mode,setMode]=useState("mvc");
+  const [text,setText]=useState("");
+  const [submitted,setSubmitted]=useState("");
+  const submit=()=>{setSubmitted(text);setText("")};
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+      {[["mvc","MVC",t.red],["mvvm","MVVM",t.grn]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>setMode(m)} style={{opacity:mode===m?1:.38}}>{l} {mode===m?"선택됨":""}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14,marginBottom:4}}>{mode==="mvc"?"MVC — Massive View Controller":"MVVM — 책임 명확히 분리"}</div>
+        {mode==="mvc"?(
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {[
+              {lbl:"Model",sub:"데이터",c:t.blue,bg:t.blueBg,brd:t.blueBrd,lines:["struct User { var name: String }"]},
+              {lbl:"View",sub:"UI 요소",c:t.grn,bg:t.grnBg,brd:t.grnBrd,lines:["UILabel, UIButton, UITextField"]},
+              {lbl:"ViewController 😱",sub:"나머지 모든 것",c:t.red,bg:t.redBg,brd:t.redBrd,lines:["네트워크 호출","데이터 가공","UI 업데이트","비즈니스 로직","에러 처리","⋯ 2000줄?"]},
+            ].map(n=>(
+              <div key={n.lbl} style={{background:n.bg,border:`1.5px solid ${n.brd}`,borderRadius:12,padding:"12px 16px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span style={{color:n.c,fontWeight:700,fontSize:13}}>{n.lbl}</span>
+                  <span style={{color:t.tx3,fontSize:10}}>{n.sub}</span>
+                </div>
+                <div style={{marginTop:8}}>{n.lines.map((l,i)=><div key={i} style={{color:t.tx2,fontSize:11,fontFamily:"monospace"}}>• {l}</div>)}</div>
+              </div>
+            ))}
+            <InfoBox t={t} color={t.red} bg={t.redBg} brd={t.redBrd}>⚠️ ViewController가 모든 걸 담당 → Massive View Controller</InfoBox>
+          </div>
+        ):(
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {[
+              {lbl:"Model",sub:"순수 데이터",c:t.blue,bg:t.blueBg,brd:t.blueBrd,lines:["struct User { var name: String }"]},
+              {lbl:"ViewModel",sub:"비즈니스 로직 + 상태",c:t.pur,bg:t.purBg,brd:t.purBrd,lines:["네트워크 호출","데이터 가공","@Published 상태"]},
+              {lbl:"View",sub:"화면 표시만",c:t.grn,bg:t.grnBg,brd:t.grnBrd,lines:["UI 렌더링","사용자 이벤트 전달"]},
+            ].map(n=>(
+              <div key={n.lbl} style={{background:n.bg,border:`1.5px solid ${n.brd}`,borderRadius:12,padding:"12px 16px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span style={{color:n.c,fontWeight:700,fontSize:13}}>{n.lbl}</span>
+                  <span style={{color:t.tx3,fontSize:10}}>{n.sub}</span>
+                </div>
+                <div style={{marginTop:8}}>{n.lines.map((l,i)=><div key={i} style={{color:t.tx2,fontSize:11,fontFamily:"monospace"}}>• {l}</div>)}</div>
+              </div>
+            ))}
+            <InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>✅ 각 레이어가 한 가지 역할만 → 테스트 가능, 유지보수 쉬움</InfoBox>
+          </div>
+        )}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={mode==="mvc"?`// ❌ MVC - ViewController가 다 함
+class UserViewController: UIViewController {
+    func viewDidLoad() {
+        fetchUsers()  // 네트워크
+    }
+    func fetchUsers() {
+        URLSession.shared.dataTask(...) {
+            let users = try JSONDecoder().decode(...)
+            DispatchQueue.main.async {
+                self.tableView.reloadData() // UI
+            }
+        }.resume()
+    }
+    // 비즈니스 로직, 에러 처리 전부 여기...
+}`:
+`// ✅ MVVM - 역할 분리
+class UserViewModel: ObservableObject {
+    @Published var users: [User] = []
+
+    func fetchUsers() async {
+        users = try await apiService.getUsers()
+    }
+}
+
+struct UserView: View {
+    @StateObject var vm = UserViewModel()
+
+    var body: some View {
+        List(vm.users) { Text($0.name) }
+            .task { await vm.fetchUsers() }
+    }
+}`}/>
+        <div style={{background:t.sur2,border:`1px solid ${t.bdr}`,borderRadius:14,padding:14}}>
+          <div style={{color:t.tx2,fontSize:12,marginBottom:10}}>미니 인터랙션</div>
+          <input value={text} onChange={e=>setText(e.target.value)} placeholder="메시지 입력..." style={{width:"100%",background:t.sur,border:`1px solid ${t.bdr}`,borderRadius:8,padding:"8px 12px",color:t.tx,fontSize:13,outline:"none",marginBottom:8}}/>
+          <button className="sb" onClick={submit} style={{background:t.blueBg,color:t.blue,border:`1px solid ${t.blueBrd}`,borderRadius:8,padding:"7px 16px",fontSize:12,fontWeight:600}}>전송 (ViewModel에서 처리)</button>
+          {submitted&&<div className="pi" style={{color:t.grn,fontSize:12,marginTop:8}}>✅ ViewModel 처리: "{submitted}"</div>}
+        </div>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 12. NOTIFICATION CENTER
+function NotifDemo({t}) {
+  const [observers,setObservers]=useState([{id:1,name:"ProfileVC",subscribed:true,received:false},{id:2,name:"FeedVC",subscribed:true,received:false},{id:3,name:"BadgeVC",subscribed:false,received:false}]);
+  const [broadcasting,setBroadcasting]=useState(false);
+  const [msg,setMsg]=useState("");
+  const broadcast=(m)=>{
+    setBroadcasting(true);setMsg(m);
+    setTimeout(()=>{
+      setObservers(obs=>obs.map(o=>({...o,received:o.subscribed})));
+      setTimeout(()=>{setBroadcasting(false)},600);
+    },400);
+  };
+  const toggle=(id)=>setObservers(obs=>obs.map(o=>o.id===id?{...o,subscribed:!o.subscribed,received:false}:o));
+  const reset=()=>setObservers(obs=>obs.map(o=>({...o,received:false})));
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>NotificationCenter 시뮬레이션</div>
+        <div style={{background:t.sur2,border:`1.5px solid ${t.bdr}`,borderRadius:14,padding:14,textAlign:"center"}}>
+          <div style={{color:t.tx3,fontSize:11,marginBottom:8}}>📡 NotificationCenter.default</div>
+          <div style={{color:t.tx,fontWeight:600,fontSize:13}}>{broadcasting?`"${msg}" 방송 중...`:"대기 중"}</div>
+          <div style={{display:"flex",gap:8,justifyContent:"center",marginTop:12,flexWrap:"wrap"}}>
+            <Btn t={t} color={t.blue} onClick={()=>{reset();broadcast("userDidLogin")}}>userDidLogin 방송</Btn>
+            <Btn t={t} color={t.pur} onClick={()=>{reset();broadcast("dataUpdated")}}>dataUpdated 방송</Btn>
+          </div>
+        </div>
+        <div style={{color:t.tx2,fontSize:12,marginBottom:4}}>구독자 목록 (탭으로 구독/해제)</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {observers.map(o=>(
+            <div key={o.id} className={o.received?"pi":""} onClick={()=>toggle(o.id)} style={{background:o.received?t.grnBg:o.subscribed?t.blueBg:t.sur2,border:`1.5px solid ${o.received?t.grnBrd:o.subscribed?t.blueBrd:t.bdr}`,borderRadius:11,padding:"11px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"all .4s cubic-bezier(.34,1.2,.64,1)"}}>
+              <div style={{width:10,height:10,borderRadius:"50%",background:o.subscribed?(o.received?t.grn:t.blue):t.bdr2,transition:"background .3s"}}/>
+              <div style={{flex:1}}>
+                <div style={{color:o.received?t.grn:o.subscribed?t.blue:t.tx2,fontFamily:"monospace",fontSize:13,fontWeight:600}}>{o.name}</div>
+                <div style={{color:t.tx3,fontSize:10}}>{o.subscribed?"구독 중":"구독 안 함"}</div>
+              </div>
+              {o.received&&<span className="pi" style={{color:t.grn,fontSize:13}}>📬 수신!</span>}
+              {!o.subscribed&&<span style={{color:t.tx3,fontSize:11}}>🔇</span>}
+            </div>
+          ))}
+        </div>
+        <div style={{color:t.tx3,fontSize:11,textAlign:"center"}}>← 탭해서 구독/해제 후 방송해보세요</div>
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// 구독 (Observer 등록)
+NotificationCenter.default.addObserver(
+    self,
+    selector: #selector(handleLogin),
+    name: .userDidLogin,
+    object: nil
+)
+
+// 방송 (Post)
+NotificationCenter.default.post(
+    name: .userDidLogin,
+    object: nil,
+    userInfo: ["user": currentUser]
+)
+
+// 수신 처리
+@objc func handleLogin(_ notification: Notification) {
+    let user = notification.userInfo?["user"]
+    updateProfile(user)
+}
+
+// 구독 해제 (메모리 누수 방지!)
+deinit {
+    NotificationCenter.default.removeObserver(self)
+}`}/>
+        <InfoBox t={t} color={t.pur} bg={t.purBg} brd={t.purBrd}>
+          <b>1:N 방송 패턴</b>: 발신자는 수신자를 몰라도 됨.<br/>
+          앱 전역 이벤트(로그인, 설정변경 등)에 적합.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 13. PROTOCOL & DI
+function ProtocolDemo({t}) {
+  const [impl,setImpl]=useState("real");
+  const [result,setResult]=useState(null);
+  const [fetching,setFetching]=useState(false);
+  const fetch=()=>{
+    setFetching(true);setResult(null);
+    setTimeout(()=>{
+      setResult(impl==="real"?"서버에서 받아온 실제 데이터: [User(id:1), User(id:2)]":"Mock 데이터: [MockUser(\"테스트유저1\"), MockUser(\"테스트유저2\")]");
+      setFetching(false);
+    },800);
+  };
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>의존성 주입 시뮬레이션</div>
+        <div style={{background:t.sur2,border:`1.5px solid ${t.bdr}`,borderRadius:14,padding:14}}>
+          <div style={{color:t.tx2,fontSize:12,marginBottom:12}}>ViewModel이 사용할 구현체 선택:</div>
+          <div style={{display:"flex",gap:8}}>
+            {[["real","🌐 실제 API",t.blue],["mock","🧪 Mock (테스트용)",t.grn]].map(([m,l,c])=>(
+              <button key={m} className="sb" onClick={()=>{setImpl(m);setResult(null)}} style={{flex:1,padding:"10px",borderRadius:10,border:`1.5px solid ${impl===m?c:t.bdr}`,background:impl===m?`${c}18`:"transparent",color:impl===m?c:t.tx2,fontSize:12,fontWeight:600}}>{l}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{background:t.purBg,border:`1.5px solid ${t.purBrd}`,borderRadius:12,padding:"12px 14px"}}>
+            <div style={{color:t.pur,fontFamily:"monospace",fontSize:12,fontWeight:600}}>protocol DataService</div>
+            <div style={{color:t.tx3,fontSize:11,marginTop:4}}>계약 (인터페이스)</div>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <div style={{flex:1,background:impl==="real"?t.blueBg:t.sur2,border:`1.5px solid ${impl==="real"?t.blueBrd:t.bdr}`,borderRadius:12,padding:"12px 14px",transition:"all .3s"}}>
+              <div style={{color:impl==="real"?t.blue:t.tx3,fontFamily:"monospace",fontSize:11,fontWeight:600}}>APIDataService</div>
+              <div style={{color:t.tx3,fontSize:10}}>실제 구현</div>
+            </div>
+            <div style={{flex:1,background:impl==="mock"?t.grnBg:t.sur2,border:`1.5px solid ${impl==="mock"?t.grnBrd:t.bdr}`,borderRadius:12,padding:"12px 14px",transition:"all .3s"}}>
+              <div style={{color:impl==="mock"?t.grn:t.tx3,fontFamily:"monospace",fontSize:11,fontWeight:600}}>MockDataService</div>
+              <div style={{color:t.tx3,fontSize:10}}>테스트 구현</div>
+            </div>
+          </div>
+          <div style={{color:t.tx3,fontSize:20,textAlign:"center"}}>↑</div>
+          <div style={{background:t.ambBg,border:`1.5px solid ${t.ambBrd}`,borderRadius:12,padding:"12px 14px",textAlign:"center"}}>
+            <div style={{color:t.amb,fontFamily:"monospace",fontSize:12,fontWeight:600}}>ViewModel</div>
+            <div style={{color:t.tx3,fontSize:10}}>프로토콜만 알고, 구현체 모름</div>
+          </div>
+        </div>
+        <Btn t={t} color={impl==="real"?t.blue:t.grn} onClick={fetch} disabled={fetching} full>{fetching?"요청 중...":"▶ fetchData() 호출"}</Btn>
+        {result&&<div className="pi" style={{background:impl==="real"?t.blueBg:t.grnBg,border:`1px solid ${impl==="real"?t.blueBrd:t.grnBrd}`,borderRadius:11,padding:"10px 14px",color:impl==="real"?t.blue:t.grn,fontSize:12,lineHeight:1.6}}>{result}</div>}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// 1. 프로토콜 정의
+protocol DataService {
+    func fetchUsers() async -> [User]
+}
+
+// 2. 실제 구현
+class APIDataService: DataService {
+    func fetchUsers() async -> [User] {
+        return try await URLSession.shared...
+    }
+}
+
+// 3. 테스트용 Mock 구현
+class MockDataService: DataService {
+    func fetchUsers() async -> [User] {
+        return [User(name: "테스트유저")]
+    }
+}
+
+// 4. ViewModel은 프로토콜만 의존
+class ViewModel {
+    let service: DataService  // 인터페이스!
+
+    init(service: DataService) {
+        self.service = service
+    }
+}
+// 실제: ViewModel(service: APIDataService())
+// 테스트: ViewModel(service: MockDataService())`}/>
+        <InfoBox t={t} color={t.pur} bg={t.purBg} brd={t.purBrd}>
+          <b>의존성 주입</b>: 구현체를 외부에서 주입 → 코드 교체 없이 테스트 가능.<br/>
+          SOLID 원칙의 D (Dependency Inversion)
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  APP
+// ═══════════════════════════════════════════════════════════════════════════════
+function App() {
+  const [dark,setDark]=useState(false);
+  const [active,setActive]=useState("callby");
+  const t=dark?DK:LT;
+  const concept=CONCEPTS.find(c=>c.id===active);
+  const renderDemo=()=>{
+    const p={t};
+    switch(active){
+      case "callby":   return <CallByDemo {...p}/>;
+      case "truth":    return <TruthDemo {...p}/>;
+      case "state":    return <StateDemo {...p}/>;
+      case "optional": return <OptionalDemo {...p}/>;
+      case "closure":  return <ClosureDemo {...p}/>;
+      case "thread":   return <ThreadDemo {...p}/>;
+      case "arc":      return <ArcDemo {...p}/>;
+      case "delegate": return <DelegateDemo {...p}/>;
+      case "lifecycle":return <LifecycleDemo {...p}/>;
+      case "async":    return <AsyncDemo {...p}/>;
+      case "arch":     return <ArchDemo {...p}/>;
+      case "notif":    return <NotifDemo {...p}/>;
+      case "protocol": return <ProtocolDemo {...p}/>;
+    }
+  };
+  // Group concepts
+  const groups=[
+    {label:"Swift 기초",ids:["callby","optional","closure"]},
+    {label:"상태 & 데이터",ids:["truth","state"]},
+    {label:"동시성",ids:["thread","async"]},
+    {label:"메모리",ids:["arc"]},
+    {label:"패턴 & 구조",ids:["delegate","lifecycle","arch","notif","protocol"]},
+  ];
+  return (
+    <div className="tr" style={{minHeight:"100vh",background:t.bg,color:t.tx,fontFamily:"'Noto Sans KR',sans-serif",display:"flex",flexDirection:"column"}}>
+      <GS t={t}/>
+      <header style={{borderBottom:`1px solid ${t.bdr}`,padding:"12px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",background:t.sur,position:"sticky",top:0,zIndex:100,boxShadow:`0 2px 16px ${t.sha}`}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,boxShadow:"0 3px 10px rgba(59,130,246,.35)"}}>🍎</div>
+          <div>
+            <div style={{fontWeight:700,fontSize:16,letterSpacing:-0.4}}>iOS 개념 시각화 LAB</div>
+            <div style={{color:t.tx3,fontSize:11,marginTop:1}}>13가지 핵심 개념 · 눈으로 보고 손으로 느끼기</div>
+          </div>
+        </div>
+        <button className="sb" onClick={()=>setDark(v=>!v)} style={{background:t.sur2,border:`1px solid ${t.bdr}`,borderRadius:11,padding:"7px 14px",display:"flex",alignItems:"center",gap:7,color:t.tx2,fontSize:13,fontWeight:600,cursor:"pointer"}}>
+          <span style={{fontSize:14,transition:"transform .4s cubic-bezier(.34,1.5,.64,1)",transform:dark?"rotate(0)":"rotate(20deg)"}}>{dark?"☀️":"🌙"}</span>
+          {dark?"라이트":"다크"}
+        </button>
+      </header>
+
+      <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+        <nav style={{width:218,borderRight:`1px solid ${t.bdr}`,padding:"18px 10px",background:t.sur,flexShrink:0,overflowY:"auto"}}>
+          {groups.map(g=>(
+            <div key={g.label} style={{marginBottom:18}}>
+              <div style={{color:t.tx3,fontSize:9,fontWeight:700,letterSpacing:1.8,paddingLeft:10,marginBottom:8}}>{g.label.toUpperCase()}</div>
+              {g.ids.map(id=>{
+                const c=CONCEPTS.find(x=>x.id===id);
+                return <button key={id} className="ct" onClick={()=>setActive(id)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"9px 10px",borderRadius:11,border:"none",background:active===id?t.blueBg:"transparent",color:active===id?t.blue:t.tx2,textAlign:"left",marginBottom:2,borderLeft:`3px solid ${active===id?t.blue:"transparent"}`,cursor:"pointer"}}>
+                  <span style={{fontSize:17}}>{c.emoji}</span>
+                  <div><div style={{fontSize:12,fontWeight:active===id?600:400,lineHeight:1.3}}>{c.label}</div><div style={{fontSize:9,color:t.tx3,marginTop:1}}>{c.sub}</div></div>
+                </button>;
+              })}
+            </div>
+          ))}
+        </nav>
+
+        <main style={{flex:1,padding:"28px 24px",overflowY:"auto"}}>
+          <div style={{marginBottom:24}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <span style={{fontSize:30}}>{concept.emoji}</span>
+              <div>
+                <h1 style={{fontSize:22,fontWeight:700,letterSpacing:-0.5,lineHeight:1.2}}>{concept.label}</h1>
+                <div style={{color:t.tx2,fontSize:13,marginTop:3}}>{concept.sub}</div>
+              </div>
+            </div>
+            <div style={{height:2.5,background:`linear-gradient(90deg,${t.blue}90,transparent)`,width:150,borderRadius:2,marginTop:12}}/>
+          </div>
+          <div key={active} className="fs">{renderDemo()}</div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+    // Mount app
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(App));
+
+    // Hide loading screen
+    const loader = document.getElementById('loading');
+    if (loader) {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.remove(), 500);
+    }
+  </script>
+</body>
+</html>
