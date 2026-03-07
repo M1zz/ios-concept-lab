@@ -2,6 +2,8 @@
 
 13가지 핵심 iOS/Swift 개념을 눈으로 보고, 직접 조작하며 배우는 인터랙티브 학습 도구
 
+🔗 **[지금 바로 체험하기 → https://m1zz.github.io/ios-concept-lab/](https://m1zz.github.io/ios-concept-lab/)**
+
 > **빌드 없음 · npm 없음 · 파일 2개**
 
 ---
@@ -31,7 +33,7 @@ Source: **GitHub Actions** 선택 → Save
 
 **끝.** 이후 `main` 브랜치에 push할 때마다 자동 배포됩니다.
 
-🔗 배포 주소: `https://[계정].github.io/[저장소이름]/`
+🔗 배포 주소: https://m1zz.github.io/ios-concept-lab/
 
 ---
 
