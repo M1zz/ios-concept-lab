@@ -92,29 +92,33 @@ function GS({t}) {
     ::-webkit-scrollbar{width:5px}
     ::-webkit-scrollbar-track{background:${t.bg}}
     ::-webkit-scrollbar-thumb{background:${t.bdr2};border-radius:3px}
-    .sb{transition:transform .14s cubic-bezier(.34,1.56,.64,1),background .18s,box-shadow .18s,border-color .18s,color .18s,opacity .18s;cursor:pointer}
-    .sb:hover{transform:translateY(-1px) scale(1.025)}
-    .sb:active{transform:scale(.93);transition-duration:.07s}
-    .ct{transition:all .22s cubic-bezier(.34,1.4,.64,1);cursor:pointer}
-    .ct:hover{transform:translateX(4px)}
-    .fs{animation:fs .38s cubic-bezier(.22,1,.36,1) both}
-    @keyframes fs{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-    .pi{animation:pi .42s cubic-bezier(.34,1.56,.64,1) both}
-    @keyframes pi{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
-    .sr{animation:sr .4s cubic-bezier(.34,1.4,.64,1) both}
-    @keyframes sr{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
-    .sk{animation:sk .45s cubic-bezier(.36,.07,.19,.97)}
+    .sb{transition:transform .22s cubic-bezier(.175,.885,.32,1.275),background .25s ease,box-shadow .25s ease,border-color .25s ease,color .25s ease,opacity .25s ease;cursor:pointer;position:relative;overflow:hidden}
+    .sb::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at var(--rx,50%) var(--ry,50%),rgba(255,255,255,.35) 0%,transparent 60%);opacity:0;transition:opacity .4s ease;pointer-events:none;border-radius:inherit}
+    .sb:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 4px 16px rgba(0,0,0,.08)}
+    .sb:active{transform:scale(.92) translateY(0);transition-duration:.1s}
+    .sb:active::after{opacity:1;transition-duration:.05s}
+    .ct{transition:all .28s cubic-bezier(.175,.885,.32,1.275);cursor:pointer}
+    .ct:hover{transform:translateX(5px);background:var(--ct-hover-bg,transparent)}
+    .fs{animation:fs .5s cubic-bezier(.175,.885,.32,1.275) both}
+    @keyframes fs{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .pi{animation:pi .5s cubic-bezier(.175,.885,.32,1.275) both}
+    @keyframes pi{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+    .sr{animation:sr .5s cubic-bezier(.175,.885,.32,1.275) both}
+    @keyframes sr{from{opacity:0;transform:translateX(-20px) scale(.95)}to{opacity:1;transform:translateX(0) scale(1)}}
+    .sk{animation:sk .5s cubic-bezier(.36,.07,.19,.97)}
     @keyframes sk{0%,100%{transform:translateX(0)}15%{transform:translateX(-8px) rotate(-1deg)}30%{transform:translateX(7px)}50%{transform:translateX(-5px)}70%{transform:translateX(4px)}90%{transform:translateX(-2px)}}
-    .pu{animation:pu 1.8s ease-in-out infinite}
-    @keyframes pu{0%,100%{opacity:1}50%{opacity:.5}}
-    .tr *{transition:background .28s ease,color .28s ease,border-color .28s ease,box-shadow .28s ease !important}
-    .mb{border-radius:13px;padding:13px 18px;text-align:center;min-width:100px;transition:all .38s cubic-bezier(.34,1.2,.64,1);border:2px solid transparent}
-    .mb:hover{transform:scale(1.06)}
+    .pu{animation:pu 2s ease-in-out infinite}
+    @keyframes pu{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.98)}}
+    .tr *{transition:background .35s cubic-bezier(.4,0,.2,1),color .35s cubic-bezier(.4,0,.2,1),border-color .35s cubic-bezier(.4,0,.2,1),box-shadow .35s cubic-bezier(.4,0,.2,1) !important}
+    .mb{border-radius:13px;padding:13px 18px;text-align:center;min-width:100px;transition:all .4s cubic-bezier(.175,.885,.32,1.275);border:2px solid transparent}
+    .mb:hover{transform:scale(1.05) translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.08)}
     .cb{font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.8;border-radius:14px;padding:16px 18px;white-space:pre;overflow-x:auto}
     button{font-family:'Noto Sans KR',sans-serif}
     .tg{display:inline-flex;align-items:center;padding:3px 10px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600}
-    .ts{width:48px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;transition:background .25s cubic-bezier(.34,1.3,.64,1)}
-    .tk{position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:left .25s cubic-bezier(.34,1.5,.64,1)}
+    .ts{width:48px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;transition:background .35s cubic-bezier(.4,0,.2,1)}
+    .ts:active{transform:scale(.92);transition-duration:.1s}
+    .tk{position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.2);transition:left .35s cubic-bezier(.175,.885,.32,1.275),width .2s ease,box-shadow .25s ease}
+    .ts:active .tk{width:24px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
   `}</style>;
 }
 
@@ -140,11 +144,21 @@ function Code({code,t}) {
 }
 
 function Panel({children,t,style={}}) {
-  return <div style={{background:t.sur,border:`1.5px solid ${t.bdr}`,borderRadius:18,padding:22,display:"flex",flexDirection:"column",gap:14,boxShadow:`0 2px 18px ${t.sha}`,...style}}>{children}</div>;
+  const [hov,setHov]=useState(false);
+  return <div onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)} style={{background:t.sur,border:`1.5px solid ${hov?t.bdr2:t.bdr}`,borderRadius:18,padding:22,display:"flex",flexDirection:"column",gap:14,boxShadow:hov?`0 8px 32px ${t.sha},0 2px 8px ${t.sha}`:`0 2px 18px ${t.sha}`,transition:"border-color .35s ease, box-shadow .45s cubic-bezier(.4,0,.2,1), transform .35s cubic-bezier(.175,.885,.32,1.275)",transform:hov?"translateY(-2px)":"translateY(0)",...style}}>{children}</div>;
 }
 
 function Btn({children,t,color,onClick,disabled,full,style:ex={}}) {
-  return <button className="sb" onClick={onClick} disabled={disabled} style={{background:`${color}18`,color,border:`1.5px solid ${color}50`,borderRadius:11,padding:"9px 18px",fontSize:13,fontWeight:600,cursor:disabled?"default":"pointer",opacity:disabled?.4:1,width:full?"100%":"auto",...ex}}>{children}</button>;
+  const handleClick=(e)=>{
+    if(disabled)return;
+    const rect=e.currentTarget.getBoundingClientRect();
+    const x=((e.clientX-rect.left)/rect.width*100).toFixed(0);
+    const y=((e.clientY-rect.top)/rect.height*100).toFixed(0);
+    e.currentTarget.style.setProperty('--rx',x+'%');
+    e.currentTarget.style.setProperty('--ry',y+'%');
+    onClick&&onClick(e);
+  };
+  return <button className="sb" onClick={handleClick} disabled={disabled} style={{background:`${color}18`,color,border:`1.5px solid ${color}50`,borderRadius:11,padding:"9px 18px",fontSize:13,fontWeight:600,cursor:disabled?"default":"pointer",opacity:disabled?.4:1,width:full?"100%":"auto",...ex}}>{children}</button>;
 }
 
 function Tag({label,color,bg,brd}) {
@@ -152,9 +166,9 @@ function Tag({label,color,bg,brd}) {
 }
 
 function MBox({label,value,color,bg,brd,glow}) {
-  return <div className="mb" style={{background:bg,borderColor:brd,boxShadow:glow?`0 0 0 3px ${color}35,0 6px 22px ${color}22`:"none"}}>
-    <div style={{color:"#888",fontSize:10,marginBottom:5,fontFamily:"monospace"}}>{label}</div>
-    <div style={{color,fontFamily:"monospace",fontSize:26,fontWeight:700}}>{value}</div>
+  return <div className="mb" style={{background:bg,borderColor:brd,boxShadow:glow?`0 0 0 4px ${color}30,0 8px 28px ${color}20`:"none",transition:"all .45s cubic-bezier(.175,.885,.32,1.275)"}}>
+    <div style={{color:"#888",fontSize:10,marginBottom:5,fontFamily:"monospace",transition:"color .3s"}}>{label}</div>
+    <div style={{color,fontFamily:"monospace",fontSize:26,fontWeight:700,transition:"all .35s cubic-bezier(.175,.885,.32,1.275)"}}>{value}</div>
   </div>;
 }
 
@@ -167,9 +181,10 @@ function Arrow({color,dir="→"}) {
 }
 
 function FlowNode({t,color,bg,brd,label,sub,small}) {
-  return <div style={{background:bg,border:`1.5px solid ${brd}`,borderRadius:10,padding:small?"7px 13px":"10px 22px",textAlign:"center"}}>
-    <div style={{color,fontWeight:600,fontSize:small?11:14}}>{label}</div>
-    {sub&&<div style={{color:t.tx3,fontSize:10,fontFamily:"monospace",marginTop:2}}>{sub}</div>}
+  const [hov,setHov]=useState(false);
+  return <div onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)} style={{background:bg,border:`1.5px solid ${brd}`,borderRadius:10,padding:small?"7px 13px":"10px 22px",textAlign:"center",transition:"all .35s cubic-bezier(.175,.885,.32,1.275)",transform:hov?"scale(1.05) translateY(-1px)":"scale(1)",boxShadow:hov?`0 4px 16px ${color}20`:"none"}}>
+    <div style={{color,fontWeight:600,fontSize:small?11:14,transition:"color .3s"}}>{label}</div>
+    {sub&&<div style={{color:t.tx3,fontSize:10,fontFamily:"monospace",marginTop:2,transition:"color .3s"}}>{sub}</div>}
   </div>;
 }
 
@@ -345,7 +360,7 @@ struct DeepView: View {
           <div style={{background:a.bg,border:`2px solid ${a.brd}`,borderRadius:14,padding:"18px 32px",textAlign:"center",width:"100%"}}>
             <div style={{color:t.tx3,fontSize:11,fontFamily:"monospace",marginBottom:8}}>CounterView</div>
             <div style={{color:t.tx3,fontSize:12,fontFamily:"monospace",marginBottom:12}}>@State count = <span style={{color:a.c,fontWeight:700,fontSize:22}}>{cnt}</span></div>
-            <button className="sb" onClick={()=>setCnt(c=>c+1)} style={{background:a.c,color:"#fff",border:"none",borderRadius:12,padding:"12px 28px",fontSize:16,fontWeight:700,cursor:"pointer",boxShadow:`0 5px 16px ${a.c}45`}}>탭: {cnt}</button>
+            <button className="sb" onClick={()=>setCnt(c=>c+1)} style={{background:a.c,color:"#fff",border:"none",borderRadius:14,padding:"14px 32px",fontSize:17,fontWeight:700,cursor:"pointer",boxShadow:`0 6px 20px ${a.c}40`,transition:"all .25s cubic-bezier(.175,.885,.32,1.275)"}}>탭: {cnt}</button>
           </div>
           <div style={{color:t.tx3,fontSize:12}}>↑ 직접 눌러보세요!</div>
         </div>}
@@ -415,7 +430,7 @@ print(name!)
       <div style={{textAlign:"center"}}>
         <div style={{color:t.tx3,fontSize:11,fontFamily:"monospace",marginBottom:14}}>Optional&lt;String&gt;</div>
         <button className="sb" onClick={()=>{setHas(v=>!v);setCrashed(false)}} style={{background:"none",border:"none",padding:0,cursor:"pointer"}}>
-          <div style={{width:148,height:148,borderRadius:"50%",margin:"0 auto",border:`3px solid ${has?t.grn:t.red}`,background:has?t.grnBg:t.redBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",transition:"all .45s cubic-bezier(.34,1.3,.64,1)",boxShadow:has?`0 0 32px ${t.grn}25,0 0 0 4px ${t.grn}15`:`0 0 32px ${t.red}25,0 0 0 4px ${t.red}15`,cursor:"pointer"}}>
+          <div style={{width:148,height:148,borderRadius:"50%",margin:"0 auto",border:`3px solid ${has?t.grn:t.red}`,background:has?t.grnBg:t.redBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",transition:"all .5s cubic-bezier(.175,.885,.32,1.275)",boxShadow:has?`0 0 40px ${t.grn}25,0 0 0 6px ${t.grn}12`:`0 0 40px ${t.red}25,0 0 0 6px ${t.red}12`,cursor:"pointer"}}>
             <div style={{fontSize:36,transition:"all .4s cubic-bezier(.34,1.5,.64,1)",transform:has?"scale(1)":"scale(.75) rotate(-10deg)"}}>{has?"📦":"💨"}</div>
             <div style={{color:has?t.grn:t.red,fontFamily:"monospace",fontSize:15,fontWeight:700,marginTop:8,transition:"all .3s"}}>{has?'"Leeo"':"nil"}</div>
             <div style={{color:t.tx3,fontSize:10,marginTop:3}}>{has?".some(value)":".none"}</div>
@@ -633,7 +648,7 @@ function ArcDemo({t}) {
                 <span style={{color:barColor,fontFamily:"monospace",fontSize:13,fontWeight:700}}>RC: {obj.rc}</span>
               </div>
               <div style={{background:t.bdr,borderRadius:6,height:8,marginBottom:10}}>
-                <div style={{width:`${pct*100}%`,height:"100%",background:barColor,borderRadius:6,transition:"all .4s cubic-bezier(.34,1.2,.64,1)"}}/>
+                <div style={{width:`${pct*100}%`,height:"100%",background:barColor,borderRadius:6,transition:"all .5s cubic-bezier(.175,.885,.32,1.275)"}}/>
               </div>
               <div style={{display:"flex",gap:6}}>
                 <button className="sb" onClick={()=>addRef(obj.id)} style={{background:t.blueBg,color:t.blue,border:`1px solid ${t.blueBrd}`,borderRadius:8,padding:"5px 12px",fontSize:12,fontWeight:600}}>+ 참조 추가</button>
@@ -1174,7 +1189,7 @@ function App() {
   return (
     <div className="tr" style={{minHeight:"100vh",background:t.bg,color:t.tx,fontFamily:"'Noto Sans KR',sans-serif",display:"flex",flexDirection:"column"}}>
       <GS t={t}/>
-      <header style={{borderBottom:`1px solid ${t.bdr}`,padding:"12px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",background:t.sur,position:"sticky",top:0,zIndex:100,boxShadow:`0 2px 16px ${t.sha}`}}>
+      <header style={{borderBottom:`1px solid ${t.bdr}`,padding:"12px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",background:t.sur,position:"sticky",top:0,zIndex:100,boxShadow:`0 1px 12px ${t.sha}`,backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)"}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,boxShadow:"0 3px 10px rgba(59,130,246,.35)"}}>🍎</div>
           <div>
@@ -1182,9 +1197,10 @@ function App() {
             <div style={{color:t.tx3,fontSize:11,marginTop:1}}>13가지 핵심 개념 · 눈으로 보고 손으로 느끼기</div>
           </div>
         </div>
-        <button className="sb" onClick={()=>setDark(v=>!v)} style={{background:t.sur2,border:`1px solid ${t.bdr}`,borderRadius:11,padding:"7px 14px",display:"flex",alignItems:"center",gap:7,color:t.tx2,fontSize:13,fontWeight:600,cursor:"pointer"}}>
-          <span style={{fontSize:14,transition:"transform .4s cubic-bezier(.34,1.5,.64,1)",transform:dark?"rotate(0)":"rotate(20deg)"}}>{dark?"☀️":"🌙"}</span>
-          {dark?"라이트":"다크"}
+        <button className="sb" onClick={()=>setDark(v=>!v)} style={{background:dark?"#1e1b18":"#f0efe9",border:`1.5px solid ${dark?"#3d3b34":"#d0cec4"}`,borderRadius:24,padding:"6px 8px",display:"flex",alignItems:"center",gap:0,cursor:"pointer",width:64,height:34,position:"relative",transition:"background .4s cubic-bezier(.4,0,.2,1), border-color .4s ease"}}>
+          <div style={{width:24,height:24,borderRadius:"50%",background:dark?"#232118":"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,boxShadow:dark?"0 2px 8px rgba(0,0,0,.4)":"0 2px 8px rgba(0,0,0,.12)",position:"absolute",left:dark?34:4,transition:"left .4s cubic-bezier(.175,.885,.32,1.275), background .35s ease, box-shadow .35s ease"}}>
+            <span style={{transition:"transform .5s cubic-bezier(.175,.885,.32,1.275),opacity .3s",transform:dark?"rotate(0deg) scale(1)":"rotate(90deg) scale(1)",display:"inline-block"}}>{dark?"☀️":"🌙"}</span>
+          </div>
         </button>
       </header>
 
@@ -1195,7 +1211,7 @@ function App() {
               <div style={{color:t.tx3,fontSize:9,fontWeight:700,letterSpacing:1.8,paddingLeft:10,marginBottom:8}}>{g.label.toUpperCase()}</div>
               {g.ids.map(id=>{
                 const c=CONCEPTS.find(x=>x.id===id);
-                return <button key={id} className="ct" onClick={()=>setActive(id)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"9px 10px",borderRadius:11,border:"none",background:active===id?t.blueBg:"transparent",color:active===id?t.blue:t.tx2,textAlign:"left",marginBottom:2,borderLeft:`3px solid ${active===id?t.blue:"transparent"}`,cursor:"pointer"}}>
+                return <button key={id} className="ct" onClick={()=>setActive(id)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"9px 10px",borderRadius:11,border:"none",background:active===id?t.blueBg:"transparent",color:active===id?t.blue:t.tx2,textAlign:"left",marginBottom:2,borderLeft:`3px solid ${active===id?t.blue:"transparent"}`,cursor:"pointer",transition:"all .3s cubic-bezier(.175,.885,.32,1.275)",boxShadow:active===id?`0 2px 12px ${t.blue}15`:"none"}}>
                   <span style={{fontSize:17}}>{c.emoji}</span>
                   <div><div style={{fontSize:12,fontWeight:active===id?600:400,lineHeight:1.3}}>{c.label}</div><div style={{fontSize:9,color:t.tx3,marginTop:1}}>{c.sub}</div></div>
                 </button>;
