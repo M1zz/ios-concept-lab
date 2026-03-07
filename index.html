@@ -81,6 +81,18 @@ const CONCEPTS = [
   {id:"arch",     emoji:"🏗",  label:"MVC vs MVVM",            sub:"아키텍처 책임 분리"},
   {id:"notif",    emoji:"📢", label:"NotificationCenter",      sub:"1:N 방송 패턴"},
   {id:"protocol", emoji:"🔒", label:"Protocol & DI",           sub:"인터페이스와 의존성 주입"},
+  {id:"gcd",      emoji:"🚦", label:"GCD & DispatchQueue",     sub:"serial vs concurrent"},
+  {id:"actor",    emoji:"🛡", label:"Actor & Sendable",         sub:"데이터 경쟁 방지"},
+  {id:"cow",      emoji:"🐄", label:"Copy on Write",            sub:"값 타입 최적화"},
+  {id:"enum",     emoji:"🏷", label:"Enum & Associated Values", sub:"패턴 매칭의 힘"},
+  {id:"generics", emoji:"🧬", label:"Generics",                 sub:"타입 안전 재사용"},
+  {id:"access",   emoji:"🔐", label:"Access Control",           sub:"접근 수준 5단계"},
+  {id:"errorh",   emoji:"🚨", label:"Error Handling",           sub:"do-try-catch & Result"},
+  {id:"codable",  emoji:"📋", label:"Codable",                  sub:"JSON 인코딩/디코딩"},
+  {id:"applife",  emoji:"🔁", label:"App Lifecycle",            sub:"앱 상태 전환"},
+  {id:"escaping", emoji:"🏃", label:"@escaping Closure",        sub:"탈출 vs 비탈출"},
+  {id:"propwrap", emoji:"🎁", label:"Property Wrappers",        sub:"@propertyWrapper 원리"},
+  {id:"responder",emoji:"👆", label:"Responder Chain",           sub:"이벤트 전달 체인"},
 ];
 
 // ── GLOBAL CSS ────────────────────────────────────────────────────────────────
@@ -1152,6 +1164,912 @@ class ViewModel {
   </div>;
 }
 
+// 14. GCD & DISPATCH QUEUE
+function GcdDemo({t}) {
+  const [mode,setMode]=useState("serial");
+  const [tasks,setTasks]=useState([]);
+  const [running,setRunning]=useState(false);
+  const run=()=>{
+    setRunning(true);setTasks([]);
+    const ts=["Task A","Task B","Task C","Task D"];
+    if(mode==="serial"){
+      ts.forEach((name,i)=>{
+        setTimeout(()=>setTasks(p=>[...p,{name,start:i*600,status:"running"}]),i*600);
+        setTimeout(()=>setTasks(p=>p.map(x=>x.name===name?{...x,status:"done"}:x)),(i+1)*600);
+      });
+      setTimeout(()=>setRunning(false),ts.length*600);
+    } else if(mode==="concurrent"){
+      ts.forEach((name,i)=>{
+        setTimeout(()=>setTasks(p=>[...p,{name,status:"running"}]),100);
+        setTimeout(()=>setTasks(p=>p.map(x=>x.name===name?{...x,status:"done"}:x)),400+Math.random()*400);
+      });
+      setTimeout(()=>setRunning(false),1000);
+    } else {
+      // sync vs async
+      setTasks([{name:"sync 호출",status:"running"}]);
+      setTimeout(()=>{
+        setTasks([{name:"sync 호출",status:"done"},{name:"🔴 메인 스레드 차단됨!",status:"blocked"}]);
+        setTimeout(()=>{
+          setTasks(p=>[...p.map(x=>({...x,status:"done"})),{name:"async 호출",status:"running"}]);
+          setTimeout(()=>{
+            setTasks(p=>p.map(x=>({...x,status:"done"})));
+            setRunning(false);
+          },500);
+        },800);
+      },600);
+    }
+  };
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+      {[["serial","Serial Queue",t.blue],["concurrent","Concurrent Queue",t.grn],["syncasync","sync vs async",t.pur]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>{setMode(m);setTasks([]);setRunning(false)}} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>{mode==="serial"?"Serial Queue — 순서대로 하나씩":mode==="concurrent"?"Concurrent Queue — 동시에 여러 개":"sync vs async — 호출 방식 차이"}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6,minHeight:160}}>
+          {tasks.map((tk,i)=>(
+            <div key={i} className={tk.status==="done"?"pi":""} style={{background:tk.status==="blocked"?t.redBg:tk.status==="done"?t.grnBg:t.ambBg,border:`1.5px solid ${tk.status==="blocked"?t.redBrd:tk.status==="done"?t.grnBrd:t.ambBrd}`,borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,transition:"all .4s cubic-bezier(.175,.885,.32,1.275)"}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:tk.status==="blocked"?t.red:tk.status==="done"?t.grn:t.amb}}/>
+              <span style={{fontSize:13,color:tk.status==="blocked"?t.red:t.tx}}>{tk.name}</span>
+              <span style={{marginLeft:"auto",fontSize:11,color:tk.status==="blocked"?t.red:tk.status==="done"?t.grn:t.amb}}>{tk.status==="blocked"?"차단":tk.status==="done"?"완료":"실행 중..."}</span>
+            </div>
+          ))}
+          {tasks.length===0&&<div style={{color:t.tx3,fontSize:13,textAlign:"center",padding:"30px 0"}}>시뮬레이션을 시작하세요</div>}
+        </div>
+        <Btn t={t} color={mode==="serial"?t.blue:mode==="concurrent"?t.grn:t.pur} onClick={run} disabled={running} full>{running?"실행 중...":"▶ 시뮬레이션 시작"}</Btn>
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={mode==="serial"?`// Serial Queue: 순서 보장, 하나씩
+let serial = DispatchQueue(label: "serial")
+
+serial.async { print("A") }  // 1번째
+serial.async { print("B") }  // 2번째
+serial.async { print("C") }  // 3번째
+// 항상 A → B → C 순서`:mode==="concurrent"?`// Concurrent Queue: 동시 실행
+let concurrent = DispatchQueue(
+    label: "concurrent",
+    attributes: .concurrent
+)
+
+concurrent.async { print("A") }
+concurrent.async { print("B") }
+concurrent.async { print("C") }
+// 순서 보장 안 됨. 동시에 실행!`:`// sync: 호출한 스레드를 차단 (완료까지 대기)
+DispatchQueue.global().sync {
+    heavyWork()  // 메인 스레드 멈춤!
+}
+
+// async: 호출한 스레드 차단 안 함
+DispatchQueue.global().async {
+    heavyWork()  // 백그라운드에서
+    DispatchQueue.main.async {
+        updateUI()  // UI는 메인에서
+    }
+}`}/>
+        <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>
+          <b>핵심</b>: Serial은 순서 보장, Concurrent는 성능 우선.<br/>
+          sync는 차단(조심!), async는 비차단.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 15. ACTOR & SENDABLE
+function ActorDemo({t}) {
+  const [mode,setMode]=useState("unsafe");
+  const [count,setCount]=useState(0);
+  const [logs,setLogs]=useState([]);
+  const [running,setRunning]=useState(false);
+  const simulate=()=>{
+    setRunning(true);setLogs([]);setCount(0);
+    if(mode==="unsafe"){
+      let c=0;
+      const addLog=(m,col)=>setLogs(p=>[...p,{m,col,id:Date.now()+Math.random()}]);
+      setTimeout(()=>addLog("Thread 1: count 읽기 (0)",t.blue),200);
+      setTimeout(()=>addLog("Thread 2: count 읽기 (0)",t.pur),350);
+      setTimeout(()=>{addLog("Thread 1: count = 0 + 1 쓰기",t.blue);c=1;setCount(1)},600);
+      setTimeout(()=>{addLog("Thread 2: count = 0 + 1 쓰기 (!!)",t.red);setCount(1)},800);
+      setTimeout(()=>{addLog("💥 기대값: 2, 실제값: 1 — 데이터 레이스!",t.red);setRunning(false)},1200);
+    } else {
+      const addLog=(m,col)=>setLogs(p=>[...p,{m,col,id:Date.now()+Math.random()}]);
+      setTimeout(()=>addLog("Task 1: actor에 접근 요청 (대기)",t.blue),200);
+      setTimeout(()=>{addLog("Task 1: count = 0 + 1 (독점 접근)");setCount(1)},500);
+      setTimeout(()=>addLog("Task 2: actor에 접근 요청 (대기)",t.pur),700);
+      setTimeout(()=>{addLog("Task 2: count = 1 + 1 (독점 접근)");setCount(2)},1000);
+      setTimeout(()=>{addLog("✅ 기대값: 2, 실제값: 2 — 안전!",t.grn);setRunning(false)},1400);
+    }
+  };
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+      {[["unsafe","❌ class (데이터 레이스)",t.red],["actor","✅ actor (안전)",t.grn]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>{setMode(m);setLogs([]);setCount(0);setRunning(false)}} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>동시 접근 시뮬레이션</div>
+        <div style={{textAlign:"center",margin:"10px 0"}}>
+          <MBox label="count" value={count} color={mode==="unsafe"&&count===1&&logs.length>3?t.red:t.blue} bg={mode==="unsafe"&&count===1&&logs.length>3?t.redBg:t.blueBg} brd={mode==="unsafe"&&count===1&&logs.length>3?t.redBrd:t.blueBrd} glow/>
+        </div>
+        <div style={{background:t.sur2,borderRadius:12,padding:12,minHeight:100}}>
+          {logs.map(l=><div key={l.id} className="pi" style={{color:l.col||t.tx,fontSize:12,marginBottom:4,fontFamily:"monospace"}}>{l.m}</div>)}
+          {logs.length===0&&<div style={{color:t.tx3,fontSize:12,textAlign:"center"}}>시뮬레이션을 시작하세요</div>}
+        </div>
+        <Btn t={t} color={mode==="unsafe"?t.red:t.grn} onClick={simulate} disabled={running} full>{running?"실행 중...":"▶ 시뮬레이션"}</Btn>
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={mode==="unsafe"?`// ❌ class — 데이터 레이스 위험
+class Counter {
+    var count = 0
+    func increment() {
+        count += 1  // 동시 접근 시 위험!
+    }
+}
+
+// 두 스레드가 동시에 읽고 쓰면
+// count가 1만 될 수 있음 (기대: 2)`:`// ✅ actor — 자동 직렬화
+actor Counter {
+    var count = 0
+    func increment() {
+        count += 1  // 독점 접근 보장
+    }
+}
+
+// 호출 시 await 필요
+let counter = Counter()
+await counter.increment()  // 안전!
+
+// Sendable: actor 간 전달 가능한 타입
+struct Data: Sendable { let value: Int }`}/>
+        <InfoBox t={t} color={t.pur} bg={t.purBg} brd={t.purBrd}>
+          <b>Actor</b>: 내부 상태에 한 번에 하나의 Task만 접근 허용.<br/>
+          <b>Sendable</b>: 동시성 경계를 넘어 안전하게 전달 가능한 타입.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 16. COPY ON WRITE
+function CowDemo({t}) {
+  const [step,setStep]=useState(0);
+  const [aAddr]=useState("0xA1B2");
+  const [bAddr,setBAddr]=useState("0xA1B2");
+  const [aVal,setAVal]=useState("[1, 2, 3]");
+  const [bVal,setBVal]=useState("[1, 2, 3]");
+  const reset=()=>{setStep(0);setBAddr("0xA1B2");setAVal("[1, 2, 3]");setBVal("[1, 2, 3]")};
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>Copy on Write 시각화</div>
+        <div style={{display:"flex",gap:16,justifyContent:"center",alignItems:"flex-start",flexWrap:"wrap",minHeight:180}}>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+            <div style={{background:t.blueBg,border:`2px solid ${t.blueBrd}`,borderRadius:14,padding:"14px 20px",textAlign:"center",transition:"all .4s cubic-bezier(.175,.885,.32,1.275)"}}>
+              <div style={{color:t.tx3,fontSize:10,fontFamily:"monospace"}}>var a</div>
+              <div style={{color:t.blue,fontFamily:"monospace",fontSize:18,fontWeight:700,margin:"6px 0"}}>{aVal}</div>
+              <div style={{color:t.tx3,fontSize:10,fontFamily:"monospace"}}>{aAddr}</div>
+            </div>
+          </div>
+          {step>=1&&<div className="sr" style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+            <div style={{background:step>=2?t.grnBg:t.ambBg,border:`2px solid ${step>=2?t.grnBrd:t.ambBrd}`,borderRadius:14,padding:"14px 20px",textAlign:"center",transition:"all .5s cubic-bezier(.175,.885,.32,1.275)"}}>
+              <div style={{color:t.tx3,fontSize:10,fontFamily:"monospace"}}>var b</div>
+              <div style={{color:step>=2?t.grn:t.amb,fontFamily:"monospace",fontSize:18,fontWeight:700,margin:"6px 0",transition:"all .4s"}}>{bVal}</div>
+              <div style={{color:t.tx3,fontSize:10,fontFamily:"monospace",transition:"all .3s"}}>{bAddr}</div>
+            </div>
+          </div>}
+        </div>
+        {step===0&&<InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>배열 a가 메모리에 할당됨</InfoBox>}
+        {step===1&&<InfoBox t={t} color={t.amb} bg={t.ambBg} brd={t.ambBrd}>var b = a → 아직 <b>같은 메모리 공유!</b> 복사 안 함 (최적화)</InfoBox>}
+        {step===2&&<InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>b를 수정 → 이제서야 <b>실제 복사 발생!</b> 별도 메모리 할당</InfoBox>}
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {step===0&&<Btn t={t} color={t.amb} onClick={()=>setStep(1)} full>var b = a (할당)</Btn>}
+          {step===1&&<Btn t={t} color={t.grn} onClick={()=>{setStep(2);setBAddr("0xC3D4");setBVal("[1, 2, 3, 99]")}} full>b.append(99) — 수정!</Btn>}
+          {step===2&&<Btn t={t} color={t.tx2} onClick={reset} full>↺ 리셋</Btn>}
+        </div>
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`var a = [1, 2, 3]
+var b = a
+// 이 시점: a와 b는 같은 메모리 공유!
+// 복사 비용 = 0 (포인터만 복사)
+
+b.append(99)
+// 이 시점: b 수정 → 실제 복사 발생!
+// a = [1, 2, 3]     주소: 0xA1B2
+// b = [1, 2, 3, 99] 주소: 0xC3D4
+
+// Array, Dictionary, String, Set 모두
+// Copy on Write 적용됨`}/>
+        <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>
+          <b>CoW 핵심</b>: 값 타입이지만 바로 복사하지 않음.<br/>
+          수정이 필요할 때만 복사 → 성능과 안전성 모두 확보!
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 17. ENUM & ASSOCIATED VALUES
+function EnumDemo({t}) {
+  const [result,setResult]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const simulate=(type)=>{
+    setLoading(true);setResult(null);
+    setTimeout(()=>{
+      if(type==="success") setResult({type:"success",data:{name:"Leeo",age:28}});
+      else if(type==="failure") setResult({type:"failure",error:"네트워크 연결 실패"});
+      else setResult({type:"loading"});
+      setLoading(false);
+    },600);
+  };
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>Result&lt;User, Error&gt; 시뮬레이션</div>
+        <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+          <Btn t={t} color={t.grn} onClick={()=>simulate("success")}>✅ 성공 응답</Btn>
+          <Btn t={t} color={t.red} onClick={()=>simulate("failure")}>❌ 실패 응답</Btn>
+          <Btn t={t} color={t.tx2} onClick={()=>{setResult(null);setLoading(false)}}>↺</Btn>
+        </div>
+        <div style={{minHeight:120,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          {loading&&<div className="pu" style={{color:t.amb,fontSize:16}}>요청 중...</div>}
+          {!loading&&!result&&<div style={{color:t.tx3,fontSize:13}}>API 응답을 시뮬레이션하세요</div>}
+          {result&&result.type==="success"&&<div className="pi" style={{background:t.grnBg,border:`2px solid ${t.grnBrd}`,borderRadius:14,padding:16,width:"100%"}}>
+            <div style={{color:t.grn,fontWeight:700,fontSize:14,marginBottom:8}}>.success(user)</div>
+            <div style={{fontFamily:"monospace",fontSize:12,color:t.tx2}}>name: "{result.data.name}"<br/>age: {result.data.age}</div>
+          </div>}
+          {result&&result.type==="failure"&&<div className="pi sk" style={{background:t.redBg,border:`2px solid ${t.redBrd}`,borderRadius:14,padding:16,width:"100%"}}>
+            <div style={{color:t.red,fontWeight:700,fontSize:14,marginBottom:8}}>.failure(error)</div>
+            <div style={{fontFamily:"monospace",fontSize:12,color:t.red}}>{result.error}</div>
+          </div>}
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{fontWeight:600,fontSize:13,color:t.tx2}}>기본 Enum vs Associated Values</div>
+          <div style={{display:"flex",gap:8}}>
+            <div style={{flex:1,background:t.sur2,border:`1px solid ${t.bdr}`,borderRadius:10,padding:10}}>
+              <div style={{color:t.tx3,fontSize:10,marginBottom:6}}>기본 enum</div>
+              <div style={{fontFamily:"monospace",fontSize:11,color:t.tx2}}>case north<br/>case south<br/>case east<br/>case west</div>
+            </div>
+            <div style={{flex:1,background:t.purBg,border:`1px solid ${t.purBrd}`,borderRadius:10,padding:10}}>
+              <div style={{color:t.pur,fontSize:10,marginBottom:6}}>Associated Values</div>
+              <div style={{fontFamily:"monospace",fontSize:11,color:t.pur}}>case success(<b>User</b>)<br/>case failure(<b>Error</b>)<br/>case loading</div>
+            </div>
+          </div>
+        </div>
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// Associated Values 활용
+enum NetworkResult {
+    case success(User)
+    case failure(Error)
+    case loading
+}
+
+// 패턴 매칭으로 처리
+switch result {
+case .success(let user):
+    print("환영합니다, \\(user.name)!")
+case .failure(let error):
+    print("오류: \\(error.message)")
+case .loading:
+    showSpinner()
+}
+
+// if case let (부분 매칭)
+if case .success(let user) = result {
+    updateUI(user)
+}`}/>
+        <InfoBox t={t} color={t.pur} bg={t.purBg} brd={t.purBrd}>
+          <b>Enum + Associated Values</b>: 각 케이스에 다른 타입의 데이터를 담을 수 있음.<br/>
+          Swift의 Result&lt;Success, Failure&gt;가 대표적 사례.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 18. GENERICS
+function GenericsDemo({t}) {
+  const [inputType,setInputType]=useState("int");
+  const [arr,setArr]=useState([3,1,4,1,5]);
+  const [strArr]=useState(["banana","apple","cherry"]);
+  const [sorted,setSorted]=useState(false);
+  const doSort=()=>setSorted(true);
+  const reset=()=>setSorted(false);
+  const display=inputType==="int"?(sorted?[...arr].sort((a,b)=>a-b):arr):(sorted?[...strArr].sort():strArr);
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>Generic 함수: swapValues&lt;T&gt;</div>
+        <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+          {[["int","Int",t.blue],["str","String",t.grn]].map(([m,l,c])=>(
+            <Btn key={m} t={t} color={c} onClick={()=>{setInputType(m);setSorted(false)}} style={{opacity:inputType===m?1:.38}}>{l}</Btn>
+          ))}
+        </div>
+        <div style={{background:t.sur2,borderRadius:14,padding:16}}>
+          <div style={{color:t.tx3,fontSize:11,fontFamily:"monospace",marginBottom:10}}>sortArray&lt;{inputType==="int"?"Int":"String"}&gt;</div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"center"}}>
+            {display.map((v,i)=>(
+              <div key={i} className={sorted?"pi":""} style={{background:inputType==="int"?t.blueBg:t.grnBg,border:`1.5px solid ${inputType==="int"?t.blueBrd:t.grnBrd}`,borderRadius:10,padding:"8px 14px",fontFamily:"monospace",fontSize:14,fontWeight:600,color:inputType==="int"?t.blue:t.grn,transition:"all .4s cubic-bezier(.175,.885,.32,1.275)"}}>{inputType==="int"?v:`"${v}"`}</div>
+            ))}
+          </div>
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          {!sorted?<Btn t={t} color={inputType==="int"?t.blue:t.grn} onClick={doSort} full>정렬 실행 (같은 함수!)</Btn>:<Btn t={t} color={t.tx2} onClick={reset} full>↺ 리셋</Btn>}
+        </div>
+        {sorted&&<InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>✅ 하나의 Generic 함수로 Int, String 모두 처리!</InfoBox>}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// 제네릭 없이: 타입마다 함수 필요 ❌
+func sortInts(_ arr: [Int]) -> [Int] { ... }
+func sortStrings(_ arr: [String]) -> [String] { ... }
+
+// 제네릭으로: 하나의 함수로 모든 타입 ✅
+func sortArray<T: Comparable>(_ arr: [T]) -> [T] {
+    return arr.sorted()
+}
+
+sortArray([3, 1, 4])       // [1, 3, 4]
+sortArray(["b", "a", "c"]) // ["a", "b", "c"]
+
+// 제네릭 타입
+struct Stack<Element> {
+    private var items: [Element] = []
+    mutating func push(_ item: Element) {
+        items.append(item)
+    }
+    mutating func pop() -> Element? {
+        return items.popLast()
+    }
+}`}/>
+        <InfoBox t={t} color={t.pur} bg={t.purBg} brd={t.purBrd}>
+          <b>Generics</b>: 타입에 의존하지 않는 범용 코드 작성.<br/>
+          Array&lt;Element&gt;, Optional&lt;Wrapped&gt; 등 Swift 핵심 타입이 모두 제네릭.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 19. ACCESS CONTROL
+function AccessDemo({t}) {
+  const levels=[
+    {name:"open",label:"open",desc:"모듈 외부에서 상속·오버라이드 가능",scope:"가장 넓음",color:"#ef4444",pct:100},
+    {name:"public",label:"public",desc:"모듈 외부에서 접근 가능 (상속 불가)",scope:"모듈 외부",color:"#f97316",pct:85},
+    {name:"internal",label:"internal",desc:"같은 모듈 내에서 접근 (기본값)",scope:"같은 모듈",color:"#eab308",pct:65},
+    {name:"fileprivate",label:"fileprivate",desc:"같은 소스 파일 내에서만 접근",scope:"같은 파일",color:"#3b82f6",pct:35},
+    {name:"private",label:"private",desc:"같은 선언(스코프) 내에서만 접근",scope:"같은 스코프",color:"#8b5cf6",pct:15},
+  ];
+  const [sel,setSel]=useState("internal");
+  const cur=levels.find(l=>l.name===sel);
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>접근 수준 5단계</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {levels.map(lv=>(
+            <button key={lv.name} className="sb" onClick={()=>setSel(lv.name)} style={{background:sel===lv.name?`${lv.color}15`:t.sur2,border:`1.5px solid ${sel===lv.name?lv.color:t.bdr}`,borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,textAlign:"left",cursor:"pointer"}}>
+              <div style={{width:`${lv.pct}%`,minWidth:8,height:8,borderRadius:4,background:lv.color,transition:"width .5s cubic-bezier(.175,.885,.32,1.275)"}}/>
+              <span style={{fontFamily:"monospace",fontSize:12,fontWeight:600,color:sel===lv.name?lv.color:t.tx2,minWidth:90}}>{lv.label}</span>
+              <span style={{color:t.tx3,fontSize:11}}>{lv.scope}</span>
+            </button>
+          ))}
+        </div>
+        {cur&&<div className="pi" key={sel} style={{background:`${cur.color}10`,border:`1.5px solid ${cur.color}40`,borderRadius:12,padding:"12px 16px"}}>
+          <div style={{color:cur.color,fontWeight:700,fontSize:14,marginBottom:4}}>{cur.label}</div>
+          <div style={{color:t.tx2,fontSize:13}}>{cur.desc}</div>
+          {sel==="internal"&&<div style={{color:t.amb,fontSize:12,marginTop:6}}>💡 아무것도 안 쓰면 기본값!</div>}
+        </div>}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// open — 외부 모듈에서 상속 가능
+open class UIViewController { }
+
+// public — 외부 접근 가능, 상속 불가
+public struct APIResponse { }
+
+// internal — 기본값, 같은 모듈
+class ViewModel { }  // = internal
+
+// fileprivate — 같은 파일만
+fileprivate func helper() { }
+
+// private — 같은 스코프만
+class User {
+    private var password: String
+    private func encrypt() { }
+}
+
+// 실전 규칙:
+// 1. 최소 권한 원칙 (좁을수록 안전)
+// 2. API는 public, 구현은 private
+// 3. 테스트할 함수는 internal로`}/>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 20. ERROR HANDLING
+function ErrorDemo({t}) {
+  const [mode,setMode]=useState("do");
+  const [step,setStep]=useState(-1);
+  const [running,setRunning]=useState(false);
+  const simulate=()=>{
+    setRunning(true);setStep(0);
+    setTimeout(()=>setStep(1),500);
+    setTimeout(()=>setStep(2),1000);
+    setTimeout(()=>{setStep(3);setRunning(false)},1500);
+  };
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+      {[["do","do-try-catch",t.blue],["result","Result 타입",t.grn],["optional","try?/try!",t.amb]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>{setMode(m);setStep(-1);setRunning(false)}} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>에러 전파 흐름</div>
+        {mode==="do"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {["함수 호출 (try)","에러 발생!","catch 블록에서 처리","UI에 에러 메시지 표시"].map((s,i)=>(
+            <div key={i} className={step===i?"pi":""} style={{background:step>i?t.grnBg:step===i?(i===1?t.redBg:t.blueBg):t.sur2,border:`1.5px solid ${step>i?t.grnBrd:step===i?(i===1?t.redBrd:t.blueBrd):t.bdr}`,borderRadius:10,padding:"10px 14px",transition:"all .4s cubic-bezier(.175,.885,.32,1.275)"}}>
+              <span style={{color:step>=i?(i===1?t.red:t.tx):t.tx3,fontSize:12}}>{i===1&&step>=1?"⚡ ":""}{s}</span>
+            </div>
+          ))}
+          <Btn t={t} color={t.blue} onClick={simulate} disabled={running} full>{running?"실행 중...":"▶ 에러 시뮬레이션"}</Btn>
+        </div>}
+        {mode==="result"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{display:"flex",gap:8}}>
+            <div style={{flex:1,background:t.grnBg,border:`1.5px solid ${t.grnBrd}`,borderRadius:12,padding:14,textAlign:"center"}}>
+              <div style={{color:t.grn,fontWeight:700,fontSize:14}}>.success</div>
+              <div style={{color:t.tx3,fontSize:11,marginTop:4}}>연관값: 데이터</div>
+            </div>
+            <div style={{flex:1,background:t.redBg,border:`1.5px solid ${t.redBrd}`,borderRadius:12,padding:14,textAlign:"center"}}>
+              <div style={{color:t.red,fontWeight:700,fontSize:14}}>.failure</div>
+              <div style={{color:t.tx3,fontSize:11,marginTop:4}}>연관값: 에러</div>
+            </div>
+          </div>
+          <InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>Result는 Enum! 성공/실패를 타입으로 명확히 구분.</InfoBox>
+        </div>}
+        {mode==="optional"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{display:"flex",gap:8}}>
+            <div style={{flex:1,background:t.ambBg,border:`1.5px solid ${t.ambBrd}`,borderRadius:12,padding:14,textAlign:"center"}}>
+              <div style={{color:t.amb,fontWeight:700,fontSize:13}}>try?</div>
+              <div style={{color:t.tx3,fontSize:11,marginTop:4}}>실패 → nil 반환<br/>에러 무시</div>
+            </div>
+            <div style={{flex:1,background:t.redBg,border:`1.5px solid ${t.redBrd}`,borderRadius:12,padding:14,textAlign:"center"}}>
+              <div style={{color:t.red,fontWeight:700,fontSize:13}}>try!</div>
+              <div style={{color:t.tx3,fontSize:11,marginTop:4}}>실패 → 크래시!<br/>100% 확신할 때만</div>
+            </div>
+          </div>
+        </div>}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={mode==="do"?`// do-try-catch: 가장 기본적인 에러 처리
+enum LoginError: Error {
+    case wrongPassword
+    case userNotFound
+}
+
+func login(pw: String) throws -> User {
+    guard pw == "1234" else {
+        throw LoginError.wrongPassword
+    }
+    return User(name: "Leeo")
+}
+
+do {
+    let user = try login(pw: "wrong")
+    print("로그인 성공: \\(user.name)")
+} catch LoginError.wrongPassword {
+    print("비밀번호 틀림")
+} catch {
+    print("알 수 없는 오류: \\(error)")
+}`:mode==="result"?`// Result 타입: 콜백에서 유용
+func fetchUser(
+    completion: (Result<User, Error>) -> Void
+) {
+    if success {
+        completion(.success(user))
+    } else {
+        completion(.failure(error))
+    }
+}
+
+// 사용
+fetchUser { result in
+    switch result {
+    case .success(let user):
+        updateUI(user)
+    case .failure(let error):
+        showError(error)
+    }
+}`:`// try? — Optional로 변환
+let user = try? login(pw: "1234")
+// 성공: Optional(User)
+// 실패: nil (에러 정보 사라짐)
+
+// try! — 강제 (위험!)
+let user = try! login(pw: "1234")
+// 실패 시 앱 크래시!
+// 절대 실패하지 않을 때만 사용`}/>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 21. CODABLE
+function CodableDemo({t}) {
+  const [dir,setDir]=useState("decode");
+  const jsonStr='{\n  "name": "Leeo",\n  "age": 28,\n  "skills": ["Swift","UIKit"]\n}';
+  const swiftStr='User(\n  name: "Leeo",\n  age: 28,\n  skills: ["Swift","UIKit"]\n)';
+  const [step,setStep]=useState(0);
+  const animate=()=>{setStep(1);setTimeout(()=>setStep(2),800)};
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+      {[["decode","JSON → Swift (Decode)",t.blue],["encode","Swift → JSON (Encode)",t.grn]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>{setDir(m);setStep(0)}} style={{opacity:dir===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>{dir==="decode"?"JSONDecoder":"JSONEncoder"}</div>
+        <div style={{display:"flex",alignItems:"center",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
+          <div style={{background:dir==="decode"?t.ambBg:t.purBg,border:`1.5px solid ${dir==="decode"?t.ambBrd:t.purBrd}`,borderRadius:12,padding:"12px 14px",fontFamily:"monospace",fontSize:11,whiteSpace:"pre",transition:"all .4s cubic-bezier(.175,.885,.32,1.275)",transform:step>=1?"scale(.95)":"scale(1)"}}>
+            <div style={{color:t.tx3,fontSize:10,marginBottom:6}}>{dir==="decode"?"JSON":"Swift 객체"}</div>
+            <div style={{color:dir==="decode"?t.amb:t.pur}}>{dir==="decode"?jsonStr:swiftStr}</div>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+            <div className={step===1?"pu":""} style={{color:step>=1?t.blue:t.bdr2,fontSize:24,transition:"color .3s"}}>{dir==="decode"?"→":"→"}</div>
+            <div style={{color:t.tx3,fontSize:9,fontFamily:"monospace"}}>{dir==="decode"?"decode":"encode"}</div>
+          </div>
+          <div style={{background:dir==="decode"?t.purBg:t.ambBg,border:`1.5px solid ${dir==="decode"?t.purBrd:t.ambBrd}`,borderRadius:12,padding:"12px 14px",fontFamily:"monospace",fontSize:11,whiteSpace:"pre",transition:"all .5s cubic-bezier(.175,.885,.32,1.275)",opacity:step>=2?1:.3,transform:step>=2?"scale(1)":"scale(.9)"}}>
+            <div style={{color:t.tx3,fontSize:10,marginBottom:6}}>{dir==="decode"?"Swift 객체":"JSON"}</div>
+            <div style={{color:dir==="decode"?t.pur:t.amb}}>{dir==="decode"?swiftStr:jsonStr}</div>
+          </div>
+        </div>
+        <Btn t={t} color={t.blue} onClick={animate} disabled={step>0} full>{step>=2?"변환 완료!":"▶ 변환 실행"}</Btn>
+        {step>=2&&<Btn t={t} color={t.tx2} onClick={()=>setStep(0)} full>↺ 리셋</Btn>}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// Codable = Decodable + Encodable
+struct User: Codable {
+    let name: String
+    let age: Int
+    let skills: [String]
+}
+
+// JSON → Swift (디코딩)
+let json = """
+{"name":"Leeo","age":28,"skills":["Swift"]}
+""".data(using: .utf8)!
+
+let user = try JSONDecoder().decode(
+    User.self, from: json
+)
+
+// Swift → JSON (인코딩)
+let data = try JSONEncoder().encode(user)
+
+// 키 이름이 다를 때: CodingKeys
+struct Post: Codable {
+    let title: String
+    let createdAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case title
+        case createdAt = "created_at"
+    }
+}`}/>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 22. APP LIFECYCLE
+function AppLifeDemo({t}) {
+  const [phase,setPhase]=useState(-1);
+  const [auto,setAuto]=useState(false);
+  const timerRef=useRef(null);
+  const phases=[
+    {name:"Not Running",desc:"앱이 실행되지 않은 상태",color:"#6b7280",bg:t.sur2,brd:t.bdr,tip:"사용자가 앱을 실행하지 않았거나, 시스템이 종료함"},
+    {name:"Inactive",desc:"포그라운드지만 이벤트 미수신",color:t.amb,bg:t.ambBg,brd:t.ambBrd,tip:"전화 수신, 알림 센터 열기 등 일시적 상태"},
+    {name:"Active",desc:"포그라운드에서 정상 실행 중",color:t.grn,bg:t.grnBg,brd:t.grnBrd,tip:"사용자가 앱을 사용 중. UI 업데이트 활발"},
+    {name:"Inactive",desc:"백그라운드 전환 직전",color:t.amb,bg:t.ambBg,brd:t.ambBrd,tip:"홈 버튼/스와이프로 나가는 중"},
+    {name:"Background",desc:"백그라운드 실행 중",color:t.blue,bg:t.blueBg,brd:t.blueBrd,tip:"약 5초간 작업 가능. 음악, 위치, 다운로드 등"},
+    {name:"Suspended",desc:"메모리에 있지만 코드 미실행",color:t.pur,bg:t.purBg,brd:t.purBrd,tip:"메모리 부족 시 시스템이 자동 종료 가능"},
+  ];
+  const next=()=>setPhase(p=>Math.min(p+1,phases.length-1));
+  const resetP=()=>{setPhase(-1);setAuto(false);clearInterval(timerRef.current)};
+  useEffect(()=>{
+    if(auto){timerRef.current=setInterval(()=>setPhase(p=>{if(p>=phases.length-1){clearInterval(timerRef.current);setAuto(false);return p;}return p+1;}),1200);}
+    return()=>clearInterval(timerRef.current);
+  },[auto]);
+  const cur=phase>=0?phases[phase]:null;
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+      <Btn t={t} color={t.blue} onClick={()=>{resetP();setTimeout(()=>setPhase(0),50)}}>▶ 처음부터</Btn>
+      <Btn t={t} color={t.grn} onClick={()=>setAuto(v=>!v)}>{auto?"⏸ 일시정지":"▶▶ 자동"}</Btn>
+      <Btn t={t} color={t.blue} onClick={next} disabled={phase>=phases.length-1}>다음 ▶</Btn>
+      <Btn t={t} color={t.tx2} onClick={resetP}>↺</Btn>
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>App 상태 전환</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {phases.map((p,i)=>(
+            <div key={i} className={phase===i?"pi":""} style={{background:phase===i?p.bg:phase>i?`${p.bg}80`:t.sur2,border:`1.5px solid ${phase===i?p.brd:phase>i?`${p.brd}60`:t.bdr}`,borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,transition:"all .35s cubic-bezier(.175,.885,.32,1.275)"}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:phase>=i?p.color:t.bdr2,flexShrink:0,transition:"background .3s"}}/>
+              <div style={{flex:1}}>
+                <div style={{color:phase===i?p.color:t.tx2,fontFamily:"monospace",fontSize:12,fontWeight:600}}>{p.name}</div>
+                <div style={{color:t.tx3,fontSize:10}}>{p.desc}</div>
+              </div>
+              {phase===i&&<span style={{color:p.color,fontSize:12}}>◀</span>}
+            </div>
+          ))}
+        </div>
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        {cur&&<div className="pi" key={phase} style={{background:cur.bg,border:`2px solid ${cur.brd}`,borderRadius:14,padding:16}}>
+          <div style={{color:cur.color,fontWeight:700,fontSize:16,marginBottom:6}}>{cur.name}</div>
+          <div style={{color:t.tx2,fontSize:13,lineHeight:1.7}}>{cur.tip}</div>
+        </div>}
+        <Code t={t} code={`class AppDelegate: UIApplicationDelegate {
+    func application(
+        _ app: UIApplication,
+        didFinishLaunchingWithOptions: ...
+    ) -> Bool {
+        // 앱 최초 실행 설정
+    }
+}
+
+class SceneDelegate: UIWindowSceneDelegate {
+    func sceneDidBecomeActive(_ scene:) {
+        // Active: 타이머 재시작
+    }
+    func sceneWillResignActive(_ scene:) {
+        // Inactive: 데이터 저장
+    }
+    func sceneDidEnterBackground(_ scene:) {
+        // Background: 작업 완료 요청
+    }
+    func sceneWillEnterForeground(_ scene:) {
+        // 다시 포그라운드로
+    }
+}`}/>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 23. @ESCAPING CLOSURE
+function EscapingDemo({t}) {
+  const [mode,setMode]=useState("non");
+  const [step,setStep]=useState(0);
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+      {[["non","비탈출 (기본)",t.blue],["escaping","@escaping (탈출)",t.amb]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>{setMode(m);setStep(0)}} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>{mode==="non"?"비탈출 클로저":"@escaping 클로저"}</div>
+        {mode==="non"?(
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+              <FlowNode t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd} label="함수 호출" sub="closure 전달"/>
+              <span style={{color:t.blue,fontSize:20}}>↓</span>
+              <FlowNode t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd} label="함수 내부에서 즉시 실행" sub="closure()"/>
+              <span style={{color:t.blue,fontSize:20}}>↓</span>
+              <FlowNode t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd} label="함수 종료" sub="closure 수명 끝"/>
+            </div>
+            <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>함수가 끝나기 전에 클로저 실행 완료.<br/>self 캡처 시 [weak self] 불필요!</InfoBox>
+          </div>
+        ):(
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+              <FlowNode t={t} color={t.amb} bg={t.ambBg} brd={t.ambBrd} label="함수 호출" sub="@escaping closure 전달"/>
+              <span style={{color:t.amb,fontSize:20}}>↓</span>
+              <FlowNode t={t} color={t.amb} bg={t.ambBg} brd={t.ambBrd} label="함수 종료" sub="closure는 아직 살아있음!"/>
+              <span style={{color:t.red,fontSize:20}}>↓ (나중에)</span>
+              <FlowNode t={t} color={t.red} bg={t.redBg} brd={t.redBrd} label="비동기 완료 후 실행" sub="네트워크 응답, 타이머 등"/>
+            </div>
+            <InfoBox t={t} color={t.red} bg={t.redBg} brd={t.redBrd}>함수가 끝난 뒤에 클로저 실행!<br/>self를 강하게 캡처 → 순환 참조 위험 → [weak self] 필수!</InfoBox>
+          </div>
+        )}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={mode==="non"?`// 비탈출 클로저 (기본값)
+func calculate(
+    using operation: (Int, Int) -> Int
+) -> Int {
+    return operation(10, 20)  // 즉시 실행
+}  // 함수 종료 → 클로저 소멸
+
+let sum = calculate { $0 + $1 }  // 30
+
+// sorted, map, filter, reduce 등이
+// 비탈출 클로저를 사용
+let sorted = [3,1,2].sorted { $0 < $1 }`:`// @escaping 클로저
+func fetchData(
+    completion: @escaping (Data) -> Void
+) {
+    URLSession.shared.dataTask(url) { data in
+        completion(data)  // 나중에 실행!
+    }.resume()
+}  // 함수는 이미 종료됨
+
+// 저장될 수도 있음
+class ViewModel {
+    var onUpdate: (() -> Void)?
+
+    func setCallback(_ cb: @escaping () -> Void) {
+        onUpdate = cb  // 프로퍼티에 저장
+    }
+}
+
+// [weak self] 필수!
+fetchData { [weak self] data in
+    self?.updateUI(data)
+}`}/>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 24. PROPERTY WRAPPERS
+function PropWrapDemo({t}) {
+  const [val,setVal]=useState(50);
+  const [raw,setRaw]=useState(50);
+  const clamp=(v)=>Math.max(0,Math.min(100,v));
+  const handleChange=(v)=>{setRaw(v);setVal(clamp(v))};
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>@Clamped 시뮬레이션</div>
+        <div style={{background:t.sur2,borderRadius:14,padding:16,textAlign:"center"}}>
+          <div style={{color:t.tx3,fontSize:11,fontFamily:"monospace",marginBottom:8}}>@Clamped(0...100) var progress</div>
+          <div style={{display:"flex",alignItems:"center",gap:14,justifyContent:"center"}}>
+            <button className="sb" onClick={()=>handleChange(raw-20)} style={{background:t.redBg,color:t.red,border:`1px solid ${t.redBrd}`,borderRadius:10,padding:"8px 14px",fontSize:16,fontWeight:700,cursor:"pointer"}}>-20</button>
+            <div style={{fontFamily:"monospace",fontSize:36,fontWeight:700,color:val!==raw?t.amb:t.blue,transition:"all .3s",minWidth:60,textAlign:"center"}}>{val}</div>
+            <button className="sb" onClick={()=>handleChange(raw+20)} style={{background:t.blueBg,color:t.blue,border:`1px solid ${t.blueBrd}`,borderRadius:10,padding:"8px 14px",fontSize:16,fontWeight:700,cursor:"pointer"}}>+20</button>
+          </div>
+          <div style={{background:t.bdr,borderRadius:6,height:10,margin:"12px 0",overflow:"hidden"}}>
+            <div style={{width:`${val}%`,height:"100%",background:`linear-gradient(90deg,${t.blue},${t.pur})`,borderRadius:6,transition:"width .4s cubic-bezier(.175,.885,.32,1.275)"}}/>
+          </div>
+          {val!==raw&&<div className="pi" style={{color:t.amb,fontSize:12}}>입력값 {raw} → @Clamped가 {val}로 보정!</div>}
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{fontWeight:600,fontSize:13,color:t.tx2}}>SwiftUI 내장 Property Wrappers</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+            {[["@State","View 내부 상태",t.blue],["@Binding","부모 상태 연결",t.grn],["@Published","변경 알림 발행",t.pur],["@AppStorage","UserDefaults 연동",t.amb]].map(([n,d,c])=>(
+              <div key={n} style={{background:`${c}10`,border:`1px solid ${c}40`,borderRadius:8,padding:"8px 10px"}}>
+                <div style={{fontFamily:"monospace",fontSize:11,fontWeight:600,color:c}}>{n}</div>
+                <div style={{color:t.tx3,fontSize:10,marginTop:2}}>{d}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// Property Wrapper 만들기
+@propertyWrapper
+struct Clamped {
+    var wrappedValue: Int {
+        didSet {
+            wrappedValue = min(max(wrappedValue, min), max)
+        }
+    }
+    let min: Int
+    let max: Int
+
+    init(wrappedValue: Int, _ range: ClosedRange<Int>) {
+        self.min = range.lowerBound
+        self.max = range.upperBound
+        self.wrappedValue = Swift.min(
+            Swift.max(wrappedValue, self.min), self.max
+        )
+    }
+}
+
+// 사용
+struct Player {
+    @Clamped(0...100) var hp = 100
+
+    mutating func takeDamage(_ d: Int) {
+        hp -= d  // 자동으로 0 이하로 안 내려감!
+    }
+}`}/>
+        <InfoBox t={t} color={t.pur} bg={t.purBg} brd={t.purBrd}>
+          <b>@propertyWrapper</b>: 프로퍼티의 get/set 로직을 재사용 가능한 래퍼로 추출.<br/>
+          @State, @Binding, @Published 모두 Property Wrapper!
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 25. RESPONDER CHAIN
+function ResponderDemo({t}) {
+  const [tapped,setTapped]=useState(null);
+  const [chain,setChain]=useState([]);
+  const hierarchy=["UIApplication","UIWindow","ViewController","OuterView","InnerView","Button"];
+  const handleTap=(level)=>{
+    setTapped(level);setChain([]);
+    const start=hierarchy.indexOf(level);
+    for(let i=start;i>=0;i--){
+      ((idx)=>{
+        setTimeout(()=>{
+          setChain(p=>[...p,hierarchy[idx]]);
+        },(start-idx)*350);
+      })(i);
+    }
+  };
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>Responder Chain 시각화</div>
+        <div style={{color:t.tx3,fontSize:12,marginBottom:4}}>아래 뷰 계층을 탭하세요:</div>
+        <div style={{background:t.sur2,border:`2px solid ${t.bdr}`,borderRadius:16,padding:14,cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();handleTap("ViewController")}}>
+          <div style={{color:t.tx3,fontSize:10,fontFamily:"monospace",marginBottom:6}}>ViewController</div>
+          <div style={{background:t.blueBg,border:`2px solid ${t.blueBrd}`,borderRadius:12,padding:12,cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();handleTap("OuterView")}}>
+            <div style={{color:t.blue,fontSize:10,fontFamily:"monospace",marginBottom:6}}>OuterView</div>
+            <div style={{background:t.purBg,border:`2px solid ${t.purBrd}`,borderRadius:10,padding:10,cursor:"pointer"}} onClick={(e)=>{e.stopPropagation();handleTap("InnerView")}}>
+              <div style={{color:t.pur,fontSize:10,fontFamily:"monospace",marginBottom:6}}>InnerView</div>
+              <button className="sb" onClick={(e)=>{e.stopPropagation();handleTap("Button")}} style={{background:t.grn,color:"#fff",border:"none",borderRadius:8,padding:"8px 20px",fontSize:12,fontWeight:600,cursor:"pointer",width:"100%"}}>Button</button>
+            </div>
+          </div>
+        </div>
+        {tapped&&<div style={{marginTop:10}}>
+          <div style={{color:t.tx2,fontSize:12,marginBottom:8}}>이벤트 전파 (First Responder → 상위):</div>
+          <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
+            {chain.map((c,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:4}}>
+                {i>0&&<span style={{color:t.tx3}}>→</span>}
+                <span className="pi" style={{background:c===tapped?t.grnBg:t.sur2,border:`1px solid ${c===tapped?t.grnBrd:t.bdr}`,borderRadius:6,padding:"3px 8px",fontFamily:"monospace",fontSize:11,color:c===tapped?t.grn:t.tx2}}>{c}</span>
+              </div>
+            ))}
+          </div>
+        </div>}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// Responder Chain
+// 이벤트 → First Responder → 상위로 전파
+
+// UIResponder 주요 메서드
+class MyView: UIView {
+    override func touchesBegan(
+        _ touches: Set<UITouch>,
+        with event: UIEvent?
+    ) {
+        // 처리하면 여기서 멈춤
+        // 처리 안 하면 → 상위로 전달
+        super.touchesBegan(touches, with: event)
+    }
+}
+
+// becomeFirstResponder — 키보드 표시
+textField.becomeFirstResponder()
+
+// resignFirstResponder — 키보드 숨김
+textField.resignFirstResponder()
+
+// 전파 순서:
+// Button → InnerView → OuterView
+// → ViewController → UIWindow
+// → UIApplication → AppDelegate`}/>
+        <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>
+          <b>Responder Chain</b>: 이벤트를 처리할 객체를 찾을 때까지<br/>
+          First Responder → 부모 뷰 → VC → Window → App 순으로 전파.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  APP
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1176,15 +2094,29 @@ function App() {
       case "arch":     return <ArchDemo {...p}/>;
       case "notif":    return <NotifDemo {...p}/>;
       case "protocol": return <ProtocolDemo {...p}/>;
+      case "gcd":      return <GcdDemo {...p}/>;
+      case "actor":    return <ActorDemo {...p}/>;
+      case "cow":      return <CowDemo {...p}/>;
+      case "enum":     return <EnumDemo {...p}/>;
+      case "generics": return <GenericsDemo {...p}/>;
+      case "access":   return <AccessDemo {...p}/>;
+      case "errorh":   return <ErrorDemo {...p}/>;
+      case "codable":  return <CodableDemo {...p}/>;
+      case "applife":  return <AppLifeDemo {...p}/>;
+      case "escaping": return <EscapingDemo {...p}/>;
+      case "propwrap": return <PropWrapDemo {...p}/>;
+      case "responder":return <ResponderDemo {...p}/>;
     }
   };
   // Group concepts
   const groups=[
-    {label:"Swift 기초",ids:["callby","optional","closure"]},
-    {label:"상태 & 데이터",ids:["truth","state"]},
-    {label:"동시성",ids:["thread","async"]},
-    {label:"메모리",ids:["arc"]},
+    {label:"Swift 기초",ids:["callby","optional","closure","enum","generics","access"]},
+    {label:"상태 & 데이터",ids:["truth","state","propwrap","codable"]},
+    {label:"동시성",ids:["thread","async","gcd","actor"]},
+    {label:"메모리",ids:["arc","cow"]},
+    {label:"에러 & 클로저",ids:["errorh","escaping"]},
     {label:"패턴 & 구조",ids:["delegate","lifecycle","arch","notif","protocol"]},
+    {label:"앱 & UIKit",ids:["applife","responder"]},
   ];
   return (
     <div className="tr" style={{minHeight:"100vh",background:t.bg,color:t.tx,fontFamily:"'Noto Sans KR',sans-serif",display:"flex",flexDirection:"column"}}>

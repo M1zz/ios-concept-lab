@@ -37,15 +37,17 @@ Source: **GitHub Actions** 선택 → Save
 
 ---
 
-## 📚 수록 개념 (13가지)
+## 📚 수록 개념 (25가지)
 
 | 카테고리 | 개념 |
 |----------|------|
-| Swift 기초 | 📦 Call by Value / Ref · 📭 Optional / nil · 🪤 Closure Capture |
-| 상태 & 데이터 | 🎯 Source of Truth · 🔄 @State / @Binding / @ObservedObject / @EnvironmentObject |
-| 동시성 | 🧵 Main vs Background Thread · ⏳ async/await |
-| 메모리 | ♻️ ARC (Retain Count 실시간 시각화) |
+| Swift 기초 | 📦 Call by Value / Ref · 📭 Optional / nil · 🪤 Closure Capture · 🏷 Enum & Associated Values · 🧬 Generics · 🔐 Access Control |
+| 상태 & 데이터 | 🎯 Source of Truth · 🔄 @State / @Binding / @ObservedObject / @EnvironmentObject · 🎁 Property Wrappers · 📋 Codable |
+| 동시성 | 🧵 Main vs Background Thread · ⏳ async/await · 🚦 GCD & DispatchQueue · 🛡 Actor & Sendable |
+| 메모리 | ♻️ ARC (Retain Count 시각화) · 🐄 Copy on Write |
+| 에러 & 클로저 | 🚨 Error Handling (do-try-catch & Result) · 🏃 @escaping Closure |
 | 패턴 & 구조 | 🔔 Delegate · 📱 View Lifecycle · 🏗 MVC vs MVVM · 📢 NotificationCenter · 🔒 Protocol & DI |
+| 앱 & UIKit | 🔁 App Lifecycle · 👆 Responder Chain |
 
 ---
 
