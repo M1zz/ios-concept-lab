@@ -67,6 +67,90 @@ const DK = {
   sha:"rgba(0,0,0,0.4)",
 };
 
+const STRINGS = {
+ko:{
+  appTitle:"iOS 개념 시각화 LAB",
+  appSub:"25가지 핵심 개념 · 눈으로 보고 손으로 느끼기",
+  dark:"다크",light:"라이트",langSwitch:"EN",
+  concepts:{
+    callby:{label:"Call by Value / Ref",sub:"복사 vs 공유"},
+    truth:{label:"Source of Truth",sub:"단일 진실 공급원"},
+    state:{label:"State Management",sub:"SwiftUI 상태 속성"},
+    optional:{label:"Optional / nil",sub:"안전한 nil 처리"},
+    closure:{label:"Closure Capture",sub:"캡처와 순환참조"},
+    thread:{label:"Main vs Background",sub:"UI 스레드의 비밀"},
+    arc:{label:"ARC 메모리 관리",sub:"retain count 원리"},
+    delegate:{label:"Delegate Pattern",sub:"객체 간 통신"},
+    lifecycle:{label:"View Lifecycle",sub:"뷰의 생애주기"},
+    async:{label:"async/await",sub:"비동기 코드의 진화"},
+    arch:{label:"MVC vs MVVM",sub:"아키텍처 책임 분리"},
+    notif:{label:"NotificationCenter",sub:"1:N 방송 패턴"},
+    protocol:{label:"Protocol & DI",sub:"인터페이스와 의존성 주입"},
+    gcd:{label:"GCD & DispatchQueue",sub:"serial vs concurrent"},
+    actor:{label:"Actor & Sendable",sub:"데이터 경쟁 방지"},
+    cow:{label:"Copy on Write",sub:"값 타입 최적화"},
+    enum:{label:"Enum & Associated Values",sub:"패턴 매칭의 힘"},
+    generics:{label:"Generics",sub:"타입 안전 재사용"},
+    access:{label:"Access Control",sub:"접근 수준 5단계"},
+    errorh:{label:"Error Handling",sub:"do-try-catch & Result"},
+    codable:{label:"Codable",sub:"JSON 인코딩/디코딩"},
+    applife:{label:"App Lifecycle",sub:"앱 상태 전환"},
+    escaping:{label:"@escaping Closure",sub:"탈출 vs 비탈출"},
+    propwrap:{label:"Property Wrappers",sub:"@propertyWrapper 원리"},
+    responder:{label:"Responder Chain",sub:"이벤트 전달 체인"},
+  },
+  groups:[
+    {label:"Swift 기초",ids:["callby","optional","closure","enum","generics","access"]},
+    {label:"상태 & 데이터",ids:["truth","state","propwrap","codable"]},
+    {label:"동시성",ids:["thread","async","gcd","actor"]},
+    {label:"메모리",ids:["arc","cow"]},
+    {label:"에러 & 클로저",ids:["errorh","escaping"]},
+    {label:"패턴 & 구조",ids:["delegate","lifecycle","arch","notif","protocol"]},
+    {label:"앱 & UIKit",ids:["applife","responder"]},
+  ],
+},
+en:{
+  appTitle:"iOS Concept Visualization LAB",
+  appSub:"25 core concepts · See it, feel it interactively",
+  dark:"Dark",light:"Light",langSwitch:"KO",
+  concepts:{
+    callby:{label:"Call by Value / Ref",sub:"Copy vs Share"},
+    truth:{label:"Source of Truth",sub:"Single source of truth"},
+    state:{label:"State Management",sub:"SwiftUI state properties"},
+    optional:{label:"Optional / nil",sub:"Safe nil handling"},
+    closure:{label:"Closure Capture",sub:"Capture & retain cycles"},
+    thread:{label:"Main vs Background",sub:"The secret of UI thread"},
+    arc:{label:"ARC Memory Mgmt",sub:"How retain count works"},
+    delegate:{label:"Delegate Pattern",sub:"Object communication"},
+    lifecycle:{label:"View Lifecycle",sub:"A view's life stages"},
+    async:{label:"async/await",sub:"Evolution of async code"},
+    arch:{label:"MVC vs MVVM",sub:"Architecture responsibility"},
+    notif:{label:"NotificationCenter",sub:"1:N broadcast pattern"},
+    protocol:{label:"Protocol & DI",sub:"Interface & dependency injection"},
+    gcd:{label:"GCD & DispatchQueue",sub:"serial vs concurrent"},
+    actor:{label:"Actor & Sendable",sub:"Preventing data races"},
+    cow:{label:"Copy on Write",sub:"Value type optimization"},
+    enum:{label:"Enum & Associated Values",sub:"The power of pattern matching"},
+    generics:{label:"Generics",sub:"Type-safe reusability"},
+    access:{label:"Access Control",sub:"5 levels of access"},
+    errorh:{label:"Error Handling",sub:"do-try-catch & Result"},
+    codable:{label:"Codable",sub:"JSON encoding/decoding"},
+    applife:{label:"App Lifecycle",sub:"App state transitions"},
+    escaping:{label:"@escaping Closure",sub:"Escaping vs non-escaping"},
+    propwrap:{label:"Property Wrappers",sub:"@propertyWrapper principle"},
+    responder:{label:"Responder Chain",sub:"Event propagation chain"},
+  },
+  groups:[
+    {label:"Swift Basics",ids:["callby","optional","closure","enum","generics","access"]},
+    {label:"State & Data",ids:["truth","state","propwrap","codable"]},
+    {label:"Concurrency",ids:["thread","async","gcd","actor"]},
+    {label:"Memory",ids:["arc","cow"]},
+    {label:"Error & Closures",ids:["errorh","escaping"]},
+    {label:"Patterns & Architecture",ids:["delegate","lifecycle","arch","notif","protocol"]},
+    {label:"App & UIKit",ids:["applife","responder"]},
+  ],
+},
+};
 const CONCEPTS = [
   {id:"callby",   emoji:"📦", label:"Call by Value / Ref",    sub:"복사 vs 공유"},
   {id:"truth",    emoji:"🎯", label:"Source of Truth",         sub:"단일 진실 공급원"},
@@ -209,7 +293,7 @@ function InfoBox({t,color,bg,brd,children}) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // 1. CALL BY VALUE / REF
-function CallByDemo({t}) {
+function CallByDemo({t,s}) {
   const [vs,setVs]=useState(0);
   const [rs,setRs]=useState(0);
   const reset=()=>{setVs(0);setRs(0)};
@@ -258,7 +342,7 @@ print(a.x)  // 99 ← 변경됨!`}/>
 }
 
 // 2. SOURCE OF TRUTH
-function TruthDemo({t}) {
+function TruthDemo({t,s}) {
   const [mode,setMode]=useState("bad");
   const [text,setText]=useState("안녕하세요");
   const [vB,setVB]=useState("안녕하세요");
@@ -313,7 +397,7 @@ struct ViewB: View { @State var greeting = "안녕하세요" }
 }
 
 // 3. STATE MANAGEMENT
-function StateDemo({t}) {
+function StateDemo({t,s}) {
   const [tab,setTab]=useState("state");
   const [cnt,setCnt]=useState(0);
   const [tog,setTog]=useState(false);
@@ -406,7 +490,7 @@ struct DeepView: View {
 }
 
 // 4. OPTIONAL
-function OptionalDemo({t}) {
+function OptionalDemo({t,s}) {
   const [has,setHas]=useState(false);
   const [mode,setMode]=useState("guard");
   const [crashed,setCrashed]=useState(false);
@@ -465,7 +549,7 @@ print(name!)
 }
 
 // 5. CLOSURE CAPTURE
-function ClosureDemo({t}) {
+function ClosureDemo({t,s}) {
   const [cnt,setCnt]=useState(0);
   const [cap,setCap]=useState(null);
   const [mode,setMode]=useState("strong");
@@ -528,7 +612,7 @@ function ClosureDemo({t}) {
 }
 
 // 6. MAIN THREAD vs BACKGROUND
-function ThreadDemo({t}) {
+function ThreadDemo({t,s}) {
   const [step,setStep]=useState(0);
   const [progress,setProgress]=useState(0);
   const [uiBlocked,setUiBlocked]=useState(false);
@@ -634,7 +718,7 @@ func fetchGood() async {
 }
 
 // 7. ARC
-function ArcDemo({t}) {
+function ArcDemo({t,s}) {
   const [objects,setObjects]=useState([]);
   const [id,setId]=useState(1);
   const addObj=()=>{setObjects(o=>[...o,{id:id,rc:1,name:`Object\u00A0${id}`}]);setId(i=>i+1)};
@@ -700,7 +784,7 @@ dog2 = nil                   // RC: 0 → 해제!`}/>
 }
 
 // 8. DELEGATE
-function DelegateDemo({t}) {
+function DelegateDemo({t,s}) {
   const [step,setStep]=useState(0);
   const [msgs,setMsgs]=useState([]);
   const addMsg=(m,c)=>setMsgs(p=>[...p,{m,c,id:Date.now()+Math.random()}]);
@@ -769,7 +853,7 @@ class ViewController: TextFieldDelegate {
 }
 
 // 9. VIEW LIFECYCLE
-function LifecycleDemo({t}) {
+function LifecycleDemo({t,s}) {
   const [phase,setPhase]=useState(-1);
   const [auto,setAuto]=useState(false);
   const timerRef=useRef(null);
@@ -844,7 +928,7 @@ function LifecycleDemo({t}) {
 }
 
 // 10. ASYNC/AWAIT
-function AsyncDemo({t}) {
+function AsyncDemo({t,s}) {
   const [mode,setMode]=useState("callback");
   const [step,setStep]=useState(-1);
   const [running,setRunning]=useState(false);
@@ -906,7 +990,7 @@ func loadContent() async throws {
 }
 
 // 11. MVC vs MVVM
-function ArchDemo({t}) {
+function ArchDemo({t,s}) {
   const [mode,setMode]=useState("mvc");
   const [text,setText]=useState("");
   const [submitted,setSubmitted]=useState("");
@@ -1001,7 +1085,7 @@ struct UserView: View {
 }
 
 // 12. NOTIFICATION CENTER
-function NotifDemo({t}) {
+function NotifDemo({t,s}) {
   const [observers,setObservers]=useState([{id:1,name:"ProfileVC",subscribed:true,received:false},{id:2,name:"FeedVC",subscribed:true,received:false},{id:3,name:"BadgeVC",subscribed:false,received:false}]);
   const [broadcasting,setBroadcasting]=useState(false);
   const [msg,setMsg]=useState("");
@@ -1078,7 +1162,7 @@ deinit {
 }
 
 // 13. PROTOCOL & DI
-function ProtocolDemo({t}) {
+function ProtocolDemo({t,s}) {
   const [impl,setImpl]=useState("real");
   const [result,setResult]=useState(null);
   const [fetching,setFetching]=useState(false);
@@ -1165,7 +1249,7 @@ class ViewModel {
 }
 
 // 14. GCD & DISPATCH QUEUE
-function GcdDemo({t}) {
+function GcdDemo({t,s}) {
   const [mode,setMode]=useState("serial");
   const [tasks,setTasks]=useState([]);
   const [running,setRunning]=useState(false);
@@ -1258,7 +1342,7 @@ DispatchQueue.global().async {
 }
 
 // 15. ACTOR & SENDABLE
-function ActorDemo({t}) {
+function ActorDemo({t,s}) {
   const [mode,setMode]=useState("unsafe");
   const [count,setCount]=useState(0);
   const [logs,setLogs]=useState([]);
@@ -1334,7 +1418,7 @@ struct Data: Sendable { let value: Int }`}/>
 }
 
 // 16. COPY ON WRITE
-function CowDemo({t}) {
+function CowDemo({t,s}) {
   const [step,setStep]=useState(0);
   const [aAddr]=useState("0xA1B2");
   const [bAddr,setBAddr]=useState("0xA1B2");
@@ -1393,7 +1477,7 @@ b.append(99)
 }
 
 // 17. ENUM & ASSOCIATED VALUES
-function EnumDemo({t}) {
+function EnumDemo({t,s}) {
   const [result,setResult]=useState(null);
   const [loading,setLoading]=useState(false);
   const simulate=(type)=>{
@@ -1472,7 +1556,7 @@ if case .success(let user) = result {
 }
 
 // 18. GENERICS
-function GenericsDemo({t}) {
+function GenericsDemo({t,s}) {
   const [inputType,setInputType]=useState("int");
   const [arr,setArr]=useState([3,1,4,1,5]);
   const [strArr]=useState(["banana","apple","cherry"]);
@@ -1535,7 +1619,7 @@ struct Stack<Element> {
 }
 
 // 19. ACCESS CONTROL
-function AccessDemo({t}) {
+function AccessDemo({t,s}) {
   const levels=[
     {name:"open",label:"open",desc:"모듈 외부에서 상속·오버라이드 가능",scope:"가장 넓음",color:"#ef4444",pct:100},
     {name:"public",label:"public",desc:"모듈 외부에서 접근 가능 (상속 불가)",scope:"모듈 외부",color:"#f97316",pct:85},
@@ -1593,7 +1677,7 @@ class User {
 }
 
 // 20. ERROR HANDLING
-function ErrorDemo({t}) {
+function ErrorDemo({t,s}) {
   const [mode,setMode]=useState("do");
   const [step,setStep]=useState(-1);
   const [running,setRunning]=useState(false);
@@ -1701,7 +1785,7 @@ let user = try! login(pw: "1234")
 }
 
 // 21. CODABLE
-function CodableDemo({t}) {
+function CodableDemo({t,s}) {
   const [dir,setDir]=useState("decode");
   const jsonStr='{\n  "name": "Leeo",\n  "age": 28,\n  "skills": ["Swift","UIKit"]\n}';
   const swiftStr='User(\n  name: "Leeo",\n  age: 28,\n  skills: ["Swift","UIKit"]\n)';
@@ -1769,7 +1853,7 @@ struct Post: Codable {
 }
 
 // 22. APP LIFECYCLE
-function AppLifeDemo({t}) {
+function AppLifeDemo({t,s}) {
   const [phase,setPhase]=useState(-1);
   const [auto,setAuto]=useState(false);
   const timerRef=useRef(null);
@@ -1845,7 +1929,7 @@ class SceneDelegate: UIWindowSceneDelegate {
 }
 
 // 23. @ESCAPING CLOSURE
-function EscapingDemo({t}) {
+function EscapingDemo({t,s}) {
   const [mode,setMode]=useState("non");
   const [step,setStep]=useState(0);
   return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
@@ -1921,7 +2005,7 @@ fetchData { [weak self] data in
 }
 
 // 24. PROPERTY WRAPPERS
-function PropWrapDemo({t}) {
+function PropWrapDemo({t,s}) {
   const [val,setVal]=useState(50);
   const [raw,setRaw]=useState(50);
   const clamp=(v)=>Math.max(0,Math.min(100,v));
@@ -1993,7 +2077,7 @@ struct Player {
 }
 
 // 25. RESPONDER CHAIN
-function ResponderDemo({t}) {
+function ResponderDemo({t,s}) {
   const [tapped,setTapped]=useState(null);
   const [chain,setChain]=useState([]);
   const hierarchy=["UIApplication","UIWindow","ViewController","OuterView","InnerView","Button"];
@@ -2075,11 +2159,14 @@ textField.resignFirstResponder()
 // ═══════════════════════════════════════════════════════════════════════════════
 function App() {
   const [dark,setDark]=useState(false);
+  const [lang,setLang]=useState("ko");
   const [active,setActive]=useState("callby");
   const t=dark?DK:LT;
+  const s=STRINGS[lang];
+  const conceptStr=s.concepts[active];
   const concept=CONCEPTS.find(c=>c.id===active);
   const renderDemo=()=>{
-    const p={t};
+    const p={t,s};
     switch(active){
       case "callby":   return <CallByDemo {...p}/>;
       case "truth":    return <TruthDemo {...p}/>;
@@ -2109,15 +2196,7 @@ function App() {
     }
   };
   // Group concepts
-  const groups=[
-    {label:"Swift 기초",ids:["callby","optional","closure","enum","generics","access"]},
-    {label:"상태 & 데이터",ids:["truth","state","propwrap","codable"]},
-    {label:"동시성",ids:["thread","async","gcd","actor"]},
-    {label:"메모리",ids:["arc","cow"]},
-    {label:"에러 & 클로저",ids:["errorh","escaping"]},
-    {label:"패턴 & 구조",ids:["delegate","lifecycle","arch","notif","protocol"]},
-    {label:"앱 & UIKit",ids:["applife","responder"]},
-  ];
+  const groups=s.groups;
   return (
     <div className="tr" style={{minHeight:"100vh",background:t.bg,color:t.tx,fontFamily:"'Noto Sans KR',sans-serif",display:"flex",flexDirection:"column"}}>
       <GS t={t}/>
@@ -2125,14 +2204,18 @@ function App() {
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,boxShadow:"0 3px 10px rgba(59,130,246,.35)"}}>🍎</div>
           <div>
-            <div style={{fontWeight:700,fontSize:16,letterSpacing:-0.4}}>iOS 개념 시각화 LAB</div>
-            <div style={{color:t.tx3,fontSize:11,marginTop:1}}>13가지 핵심 개념 · 눈으로 보고 손으로 느끼기</div>
+            <div style={{fontWeight:700,fontSize:16,letterSpacing:-0.4}}>{s.appTitle}</div>
+            <div style={{color:t.tx3,fontSize:11,marginTop:1}}>{s.appSub}</div>
           </div>
         </div>
         <button className="sb" onClick={()=>setDark(v=>!v)} style={{background:dark?"#1e1b18":"#f0efe9",border:`1.5px solid ${dark?"#3d3b34":"#d0cec4"}`,borderRadius:24,padding:"6px 8px",display:"flex",alignItems:"center",gap:0,cursor:"pointer",width:64,height:34,position:"relative",transition:"background .4s cubic-bezier(.4,0,.2,1), border-color .4s ease"}}>
           <div style={{width:24,height:24,borderRadius:"50%",background:dark?"#232118":"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,boxShadow:dark?"0 2px 8px rgba(0,0,0,.4)":"0 2px 8px rgba(0,0,0,.12)",position:"absolute",left:dark?34:4,transition:"left .4s cubic-bezier(.175,.885,.32,1.275), background .35s ease, box-shadow .35s ease"}}>
             <span style={{transition:"transform .5s cubic-bezier(.175,.885,.32,1.275),opacity .3s",transform:dark?"rotate(0deg) scale(1)":"rotate(90deg) scale(1)",display:"inline-block"}}>{dark?"☀️":"🌙"}</span>
           </div>
+        </button>
+        <button className="sb" onClick={()=>setLang(l=>l==="ko"?"en":"ko")} style={{background:t.sur2,border:`1px solid ${t.bdr}`,borderRadius:11,padding:"7px 14px",display:"flex",alignItems:"center",gap:7,color:t.tx2,fontSize:13,fontWeight:600,cursor:"pointer",marginLeft:8}}>
+          <span style={{fontSize:14}}>🌐</span>
+          {s.langSwitch}
         </button>
       </header>
 
@@ -2145,7 +2228,7 @@ function App() {
                 const c=CONCEPTS.find(x=>x.id===id);
                 return <button key={id} className="ct" onClick={()=>setActive(id)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"9px 10px",borderRadius:11,border:"none",background:active===id?t.blueBg:"transparent",color:active===id?t.blue:t.tx2,textAlign:"left",marginBottom:2,borderLeft:`3px solid ${active===id?t.blue:"transparent"}`,cursor:"pointer",transition:"all .3s cubic-bezier(.175,.885,.32,1.275)",boxShadow:active===id?`0 2px 12px ${t.blue}15`:"none"}}>
                   <span style={{fontSize:17}}>{c.emoji}</span>
-                  <div><div style={{fontSize:12,fontWeight:active===id?600:400,lineHeight:1.3}}>{c.label}</div><div style={{fontSize:9,color:t.tx3,marginTop:1}}>{c.sub}</div></div>
+                  <div><div style={{fontSize:12,fontWeight:active===id?600:400,lineHeight:1.3}}>{s.concepts[id].label}</div><div style={{fontSize:9,color:t.tx3,marginTop:1}}>{s.concepts[id].sub}</div></div>
                 </button>;
               })}
             </div>
@@ -2157,8 +2240,8 @@ function App() {
             <div style={{display:"flex",alignItems:"center",gap:12}}>
               <span style={{fontSize:30}}>{concept.emoji}</span>
               <div>
-                <h1 style={{fontSize:22,fontWeight:700,letterSpacing:-0.5,lineHeight:1.2}}>{concept.label}</h1>
-                <div style={{color:t.tx2,fontSize:13,marginTop:3}}>{concept.sub}</div>
+                <h1 style={{fontSize:22,fontWeight:700,letterSpacing:-0.5,lineHeight:1.2}}>{conceptStr.label}</h1>
+                <div style={{color:t.tx2,fontSize:13,marginTop:3}}>{conceptStr.sub}</div>
               </div>
             </div>
             <div style={{height:2.5,background:`linear-gradient(90deg,${t.blue}90,transparent)`,width:150,borderRadius:2,marginTop:12}}/>
