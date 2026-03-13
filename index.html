@@ -70,7 +70,7 @@ const DK = {
 const STRINGS = {
 ko:{
   appTitle:"iOS 개념 시각화 LAB",
-  appSub:"31가지 핵심 개념 · 눈으로 보고 손으로 느끼기",
+  appSub:"50가지 핵심 개념 · 눈으로 보고 손으로 느끼기",
   dark:"다크",light:"라이트",langSwitch:"EN",
   concepts:{
     callby:{label:"Call by Value / Ref",sub:"복사 vs 공유"},
@@ -104,6 +104,25 @@ ko:{
     overflow:{label:"Integer Overflow",sub:"정수 표현과 오버플로우"},
     floatpoint:{label:"부동소수점 함정",sub:"0.1 + 0.2 ≠ 0.3"},
     unicode:{label:"Unicode & String",sub:"이모지 글자 수의 비밀"},
+    virtualmem:{label:"가상 메모리 & 페이징",sub:"앱이 보는 주소의 비밀"},
+    pointer:{label:"포인터 & 메모리 주소",sub:"Swift 뒤의 메모리 직접 접근"},
+    procthread:{label:"프로세스 vs 스레드",sub:"앱 실행의 단위"},
+    syncprim:{label:"동기화 & 데드락",sub:"Mutex, Semaphore, 그리고 교착"},
+    cache:{label:"캐시 계층 (L1/L2/L3)",sub:"struct 배열이 빠른 진짜 이유"},
+    compile:{label:"컴파일 & 링킹",sub:".swift에서 실행파일까지"},
+    syscall:{label:"시스템 콜 & I/O",sub:"커널에 요청하는 방법"},
+    endian:{label:"엔디안 & 비트 연산",sub:"바이트 순서와 비트 다루기"},
+    typeinfer:{label:"타입 추론",sub:"let x = 42의 비밀"},
+    valuesem:{label:"값 의미론 vs 참조 의미론",sub:"불변성과 스레드 안전"},
+    higherorder:{label:"고차 함수 & FP",sub:"map, filter, reduce"},
+    lazyeval:{label:"지연 평가",sub:"필요할 때만 계산하기"},
+    dispatch:{label:"Static vs Dynamic Dispatch",sub:"메서드 호출의 비밀"},
+    variance:{label:"공변 & 반변",sub:"제네릭 타입의 서브타이핑"},
+    somany:{label:"some vs any",sub:"불투명 타입과 존재 타입"},
+    patternmatch:{label:"패턴 매칭 심화",sub:"switch의 숨겨진 힘"},
+    recursivetype:{label:"재귀 타입",sub:"indirect enum으로 트리 만들기"},
+    typeerasure:{label:"타입 소거",sub:"AnyPublisher의 원리"},
+    macros:{label:"Swift Macros",sub:"컴파일 타임 코드 생성"},
   },
   groups:[
     {label:"Swift 기초",ids:["callby","optional","closure","enum","generics","access"]},
@@ -114,11 +133,13 @@ ko:{
     {label:"패턴 & 구조",ids:["delegate","lifecycle","arch","notif","protocol"]},
     {label:"앱 & UIKit",ids:["applife","responder"]},
     {label:"숫자 & 문자",ids:["overflow","floatpoint","unicode"]},
+    {label:"시스템 프로그래밍",ids:["virtualmem","pointer","procthread","syncprim","cache","compile","syscall","endian"]},
+    {label:"프로그래밍 언어론",ids:["typeinfer","valuesem","higherorder","lazyeval","dispatch","variance","somany","patternmatch","recursivetype","typeerasure","macros"]},
   ],
 },
 en:{
   appTitle:"iOS Concept Visualization LAB",
-  appSub:"31 core concepts · See it, feel it interactively",
+  appSub:"50 core concepts · See it, feel it interactively",
   dark:"Dark",light:"Light",langSwitch:"KO",
   concepts:{
     callby:{label:"Call by Value / Ref",sub:"Copy vs Share"},
@@ -152,6 +173,25 @@ en:{
     overflow:{label:"Integer Overflow",sub:"Integer representation & overflow"},
     floatpoint:{label:"Floating Point Trap",sub:"0.1 + 0.2 ≠ 0.3"},
     unicode:{label:"Unicode & String",sub:"The secret of emoji character count"},
+    virtualmem:{label:"Virtual Memory & Paging",sub:"The secret of app addresses"},
+    pointer:{label:"Pointers & Memory",sub:"Direct memory access behind Swift"},
+    procthread:{label:"Process vs Thread",sub:"Units of execution"},
+    syncprim:{label:"Sync & Deadlock",sub:"Mutex, Semaphore, and deadlocks"},
+    cache:{label:"Cache Hierarchy (L1/L2/L3)",sub:"Why struct arrays are really faster"},
+    compile:{label:"Compile & Linking",sub:"From .swift to executable"},
+    syscall:{label:"System Calls & I/O",sub:"How to request the kernel"},
+    endian:{label:"Endian & Bit Ops",sub:"Byte order and bit manipulation"},
+    typeinfer:{label:"Type Inference",sub:"The secret of let x = 42"},
+    valuesem:{label:"Value vs Reference Semantics",sub:"Immutability & thread safety"},
+    higherorder:{label:"Higher-Order Functions",sub:"map, filter, reduce"},
+    lazyeval:{label:"Lazy Evaluation",sub:"Compute only when needed"},
+    dispatch:{label:"Static vs Dynamic Dispatch",sub:"How method calls are resolved"},
+    variance:{label:"Covariance & Contravariance",sub:"Generic subtyping rules"},
+    somany:{label:"some vs any",sub:"Opaque & existential types"},
+    patternmatch:{label:"Advanced Pattern Matching",sub:"Hidden power of switch"},
+    recursivetype:{label:"Recursive Types",sub:"Trees with indirect enum"},
+    typeerasure:{label:"Type Erasure",sub:"How AnyPublisher works"},
+    macros:{label:"Swift Macros",sub:"Compile-time code generation"},
   },
   groups:[
     {label:"Swift Basics",ids:["callby","optional","closure","enum","generics","access"]},
@@ -162,6 +202,8 @@ en:{
     {label:"Patterns & Architecture",ids:["delegate","lifecycle","arch","notif","protocol"]},
     {label:"App & UIKit",ids:["applife","responder"]},
     {label:"Numbers & Strings",ids:["overflow","floatpoint","unicode"]},
+    {label:"Systems Programming",ids:["virtualmem","pointer","procthread","syncprim","cache","compile","syscall","endian"]},
+    {label:"PL Theory",ids:["typeinfer","valuesem","higherorder","lazyeval","dispatch","variance","somany","patternmatch","recursivetype","typeerasure","macros"]},
   ],
 },
 };
@@ -197,6 +239,25 @@ const CONCEPTS = [
   {id:"overflow",emoji:"💥", label:"Integer Overflow",            sub:"정수 표현과 오버플로우"},
   {id:"floatpoint",emoji:"🎯", label:"부동소수점 함정",            sub:"0.1 + 0.2 ≠ 0.3"},
   {id:"unicode",emoji:"🔤", label:"Unicode & String",             sub:"이모지 글자 수의 비밀"},
+  {id:"virtualmem",emoji:"🗺", label:"가상 메모리 & 페이징",       sub:"앱이 보는 주소의 비밀"},
+  {id:"pointer",emoji:"👉", label:"포인터 & 메모리 주소",          sub:"Swift 뒤의 메모리 직접 접근"},
+  {id:"procthread",emoji:"⚙️", label:"프로세스 vs 스레드",         sub:"앱 실행의 단위"},
+  {id:"syncprim",emoji:"🔒", label:"동기화 & 데드락",              sub:"Mutex, Semaphore, 그리고 교착"},
+  {id:"cache",emoji:"⚡", label:"캐시 계층",                       sub:"struct 배열이 빠른 진짜 이유"},
+  {id:"compile",emoji:"🔨", label:"컴파일 & 링킹",                 sub:".swift에서 실행파일까지"},
+  {id:"syscall",emoji:"📞", label:"시스템 콜 & I/O",               sub:"커널에 요청하는 방법"},
+  {id:"endian",emoji:"🔀", label:"엔디안 & 비트 연산",             sub:"바이트 순서와 비트 다루기"},
+  {id:"typeinfer",emoji:"🔎", label:"타입 추론",                   sub:"let x = 42의 비밀"},
+  {id:"valuesem",emoji:"🧊", label:"값 의미론 vs 참조 의미론",      sub:"불변성과 스레드 안전"},
+  {id:"higherorder",emoji:"🎵", label:"고차 함수 & FP",            sub:"map, filter, reduce"},
+  {id:"lazyeval",emoji:"😴", label:"지연 평가",                    sub:"필요할 때만 계산하기"},
+  {id:"dispatch",emoji:"🎯", label:"Static vs Dynamic Dispatch",   sub:"메서드 호출의 비밀"},
+  {id:"variance",emoji:"📐", label:"공변 & 반변",                  sub:"제네릭 타입의 서브타이핑"},
+  {id:"somany",emoji:"🎭", label:"some vs any",                    sub:"불투명 타입과 존재 타입"},
+  {id:"patternmatch",emoji:"🧩", label:"패턴 매칭 심화",            sub:"switch의 숨겨진 힘"},
+  {id:"recursivetype",emoji:"🌳", label:"재귀 타입",                sub:"indirect enum으로 트리 만들기"},
+  {id:"typeerasure",emoji:"🎪", label:"타입 소거",                  sub:"AnyPublisher의 원리"},
+  {id:"macros",emoji:"🪄", label:"Swift Macros",                   sub:"컴파일 타임 코드 생성"},
 ];
 
 // ── GLOBAL CSS ────────────────────────────────────────────────────────────────
@@ -2836,6 +2897,1606 @@ print(str[idx])  // "f"
   </div>;
 }
 
+// 32. VIRTUAL MEMORY & PAGING
+function VirtualMemDemo({t}) {
+  const [pages,setPages]=useState([
+    {id:0,virtual:"0x0000",physical:"0x8000",status:"mapped",label:"Code"},
+    {id:1,virtual:"0x1000",physical:"0xA000",status:"mapped",label:"Data"},
+    {id:2,virtual:"0x2000",physical:null,status:"unmapped",label:"Stack"},
+    {id:3,virtual:"0x3000",physical:"0xC000",status:"mapped",label:"Heap"},
+  ]);
+  const [fault,setFault]=useState(null);
+  const accessPage=(id)=>{
+    const pg=pages.find(p=>p.id===id);
+    if(pg.status==="unmapped"){
+      setFault(id);
+      setTimeout(()=>{
+        setPages(ps=>ps.map(p=>p.id===id?{...p,physical:"0xF000",status:"mapped"}:p));
+        setFault(null);
+      },1200);
+    }
+  };
+  const reset=()=>{setPages([
+    {id:0,virtual:"0x0000",physical:"0x8000",status:"mapped",label:"Code"},
+    {id:1,virtual:"0x1000",physical:"0xA000",status:"mapped",label:"Data"},
+    {id:2,virtual:"0x2000",physical:null,status:"unmapped",label:"Stack"},
+    {id:3,virtual:"0x3000",physical:"0xC000",status:"mapped",label:"Heap"},
+  ]);setFault(null)};
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>페이지 테이블 (가상 → 물리)</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {pages.map(pg=>(
+            <div key={pg.id} className={fault===pg.id?"pu":pg.status==="mapped"?"":""}
+              style={{display:"flex",alignItems:"center",gap:8,background:fault===pg.id?t.ambBg:pg.status==="mapped"?t.grnBg:t.redBg,border:`1.5px solid ${fault===pg.id?t.ambBrd:pg.status==="mapped"?t.grnBrd:t.redBrd}`,borderRadius:10,padding:"8px 12px",cursor:"pointer",transition:"all .4s"}}
+              onClick={()=>accessPage(pg.id)}>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:"monospace",fontSize:12,fontWeight:600}}>{pg.label}</div>
+                <div style={{fontFamily:"monospace",fontSize:10,color:t.tx3}}>가상: {pg.virtual}</div>
+              </div>
+              <span style={{color:t.tx3,fontSize:14}}>→</span>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontFamily:"monospace",fontSize:12,color:pg.status==="mapped"?t.grn:t.red,fontWeight:600}}>{pg.physical||"⚠ 없음"}</div>
+                <div style={{fontSize:10,color:t.tx3}}>{fault===pg.id?"Page Fault!":pg.status==="mapped"?"물리 매핑됨":"미매핑"}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {fault!==null&&<div className="pi" style={{background:t.ambBg,border:`1px solid ${t.ambBrd}`,borderRadius:10,padding:10,color:t.amb,fontSize:12,textAlign:"center"}}>Page Fault 발생! OS가 물리 메모리를 할당 중...</div>}
+        <Btn t={t} color={t.tx2} onClick={reset}>↺ 리셋</Btn>
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// 가상 메모리: 앱은 가상 주소만 봄
+// 0x0000 ~ 0xFFFF (앱이 보는 주소)
+//     ↓ 페이지 테이블 (MMU가 변환)
+// 0x8000 ~ 0xFFFF (실제 RAM 주소)
+
+// iOS 메모리 경고 → Jetsam
+// 물리 메모리 부족 시:
+// 1. didReceiveMemoryWarning 호출
+// 2. 무시하면 → Jetsam이 앱 강제 종료
+
+// 페이지 크기: 16KB (arm64)
+// 앱의 메모리 = 페이지 단위로 관리
+
+// Dirty Page: 수정된 페이지 (swap 불가)
+// Clean Page: 읽기만 한 페이지 (해제 가능)
+// → Dirty 줄이기 = 메모리 효율 핵심`}/>
+        <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>
+          <b>가상 메모리</b>: 각 앱은 독립된 주소 공간을 갖습니다. 다른 앱의 메모리에 접근할 수 없어 <b>앱 격리(Sandboxing)</b>의 기초.
+        </InfoBox>
+        <InfoBox t={t} color={t.red} bg={t.redBg} brd={t.redBrd}>
+          <b>iOS는 swap 없음!</b> macOS와 달리 디스크로 페이지를 내보내지 않습니다. 메모리 부족 = 즉시 종료.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 33. POINTER & MEMORY ADDRESS
+function PointerDemo({t}) {
+  const [mode,setMode]=useState("unsafe");
+  const [step,setStep]=useState(0);
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+      {[["unsafe","UnsafePointer",t.red],["buffer","Buffer Pointer",t.blue],["managed","Unmanaged",t.pur]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>{setMode(m);setStep(0)}} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        {mode==="unsafe"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>UnsafePointer — 메모리 직접 접근</div>
+          <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
+            {[["0x00","42","Int"],["0x08","3.14","Double"],["0x10","true","Bool"]].map(([addr,val,typ],i)=>(
+              <div key={i} style={{background:t.sur2,border:`1.5px solid ${step>i?t.red:t.bdr}`,borderRadius:10,padding:"10px 14px",textAlign:"center",transition:"all .4s",minWidth:80}}>
+                <div style={{fontFamily:"monospace",fontSize:10,color:t.tx3}}>{addr}</div>
+                <div style={{fontFamily:"monospace",fontSize:18,fontWeight:700,color:step>i?t.red:t.blue,margin:"4px 0"}}>{val}</div>
+                <div style={{fontSize:10,color:t.tx3}}>{typ}</div>
+              </div>
+            ))}
+          </div>
+          <Btn t={t} color={t.red} onClick={()=>setStep(s=>Math.min(s+1,3))} full disabled={step>=3}>포인터로 메모리 읽기 →</Btn>
+          {step>=3&&<InfoBox t={t} color={t.red} bg={t.redBg} brd={t.redBrd}>⚠ Unsafe = 타입 안전 보장 없음. 잘못된 주소 접근 = 크래시!</InfoBox>}
+        </div>}
+        {mode==="buffer"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>UnsafeBufferPointer — 연속 메모리</div>
+          <div style={{display:"flex",gap:2,justifyContent:"center"}}>
+            {[1,2,3,4,5,6,7,8].map((v,i)=>(
+              <div key={i} style={{width:34,height:44,display:"flex",alignItems:"center",justifyContent:"center",background:t.blueBg,border:`1.5px solid ${t.blueBrd}`,borderRadius:6,fontFamily:"monospace",fontSize:14,fontWeight:700,color:t.blue}}>{v}</div>
+            ))}
+          </div>
+          <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>연속된 메모리 블록을 가리킴. C 배열과 호환. Data, Image 버퍼 처리에 사용.</InfoBox>
+        </div>}
+        {mode==="managed"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>Unmanaged — ARC 우회</div>
+          <div style={{display:"flex",gap:16,justifyContent:"center",alignItems:"center"}}>
+            <div style={{background:t.purBg,border:`2px solid ${t.purBrd}`,borderRadius:12,padding:14,textAlign:"center"}}>
+              <div style={{fontSize:10,color:t.tx3}}>ARC 관리 밖</div>
+              <div style={{fontFamily:"monospace",fontSize:14,fontWeight:600,color:t.pur}}>CFType</div>
+            </div>
+            <span style={{color:t.tx3}}>↔</span>
+            <div style={{background:t.grnBg,border:`2px solid ${t.grnBrd}`,borderRadius:12,padding:14,textAlign:"center"}}>
+              <div style={{fontSize:10,color:t.tx3}}>ARC 관리</div>
+              <div style={{fontFamily:"monospace",fontSize:14,fontWeight:600,color:t.grn}}>Swift Object</div>
+            </div>
+          </div>
+          <InfoBox t={t} color={t.pur} bg={t.purBg} brd={t.purBrd}>Core Foundation(C) 객체를 Swift로 브릿징할 때 사용. takeRetainedValue / takeUnretainedValue.</InfoBox>
+        </div>}
+      </Panel>
+      <Code t={t} code={mode==="unsafe"?`// UnsafePointer — 읽기 전용
+var value = 42
+withUnsafePointer(to: &value) { ptr in
+    print(ptr.pointee)  // 42
+    print(ptr)           // 0x7ff...
+}
+
+// UnsafeMutablePointer — 읽기/쓰기
+let ptr = UnsafeMutablePointer<Int>.allocate(capacity: 1)
+ptr.initialize(to: 100)
+print(ptr.pointee)  // 100
+ptr.deinitialize(count: 1)
+ptr.deallocate()  // 반드시 해제!
+
+// ⚠ 잘못된 접근 = EXC_BAD_ACCESS
+// Swift가 Unsafe로 이름 지은 이유!`:mode==="buffer"?`// UnsafeBufferPointer — 연속 메모리 접근
+let array = [1, 2, 3, 4, 5]
+array.withUnsafeBufferPointer { buffer in
+    print(buffer.count)     // 5
+    print(buffer[0])        // 1
+    print(buffer.baseAddress!) // 시작 주소
+}
+
+// Data를 바이트 배열로 읽기
+let data = Data([0xFF, 0xD8, 0xFF, 0xE0])
+data.withUnsafeBytes { bytes in
+    let ptr = bytes.bindMemory(to: UInt8.self)
+    // JPEG 헤더 확인: FF D8
+}
+
+// C 함수와 호환 (memcpy, memmove 등)`:`// Unmanaged — Core Foundation 브릿징
+// CF 객체 → Swift 객체
+let cfStr = CFStringCreateWithCString(
+    nil, "hello", CFStringBuiltInEncodings.UTF8.rawValue
+)!
+let swiftStr = Unmanaged
+    .passRetained(cfStr)  // ARC가 관리 시작
+    .takeRetainedValue() as String
+
+// passRetained: RC+1 (소유권 가져옴)
+// passUnretained: RC 안 올림
+// takeRetainedValue: RC-1 후 반환
+// takeUnretainedValue: RC 그대로 반환`}/>
+    </Grid2>
+  </div>;
+}
+
+// 34. PROCESS vs THREAD
+function ProcThreadDemo({t}) {
+  const [procs]=useState([
+    {id:1,name:"내 앱",threads:["Main","Network","Render"],mem:"128MB",color:t.blue},
+    {id:2,name:"Extension",threads:["Main"],mem:"32MB",color:t.grn},
+    {id:3,name:"다른 앱",threads:["Main","BG"],mem:"96MB",color:t.pur},
+  ]);
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>프로세스 격리 & 스레드 공유</div>
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {procs.map(p=>(
+            <div key={p.id} style={{background:t.sur2,border:`1.5px solid ${p.color}40`,borderRadius:12,padding:12}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                <span style={{fontFamily:"monospace",fontSize:13,fontWeight:600,color:p.color}}>{p.name}</span>
+                <span style={{fontSize:10,color:t.tx3}}>PID:{p.id} · {p.mem}</span>
+              </div>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                {p.threads.map((th,i)=>(
+                  <div key={i} style={{background:`${p.color}15`,border:`1px solid ${p.color}40`,borderRadius:8,padding:"4px 10px",fontFamily:"monospace",fontSize:11,color:p.color}}>{th} Thread</div>
+                ))}
+              </div>
+              <div style={{marginTop:6,height:4,background:t.bdr,borderRadius:2}}>
+                <div style={{width:`${parseInt(p.mem)/1.5}%`,height:"100%",background:p.color,borderRadius:2,opacity:0.6}}/>
+              </div>
+            </div>
+          ))}
+        </div>
+        <InfoBox t={t} color={t.red} bg={t.redBg} brd={t.redBrd}>
+          프로세스끼리 메모리 접근 불가! (Sandbox)<br/>
+          스레드끼리는 같은 프로세스 내 메모리 공유.
+        </InfoBox>
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// 프로세스 = 독립 실행 단위
+// • 독립된 메모리 공간 (가상 메모리)
+// • 독립된 파일 디스크립터
+// • 다른 프로세스와 격리됨
+
+// iOS 앱 = 1개 프로세스
+// App Extension = 별도 프로세스
+// → App Group으로 데이터 공유
+
+// 스레드 = 프로세스 내 실행 흐름
+// • 같은 메모리 공간 공유 (Heap)
+// • 각자 독립된 Stack
+// • 동시에 실행 가능 (멀티코어)
+
+// iOS 스레드 구조
+// Main Thread — UI 담당 (1개)
+// Background Threads — 작업용 (N개)
+// GCD가 스레드 풀(pool) 관리
+
+// 프로세스 간 통신 (IPC)
+// • URL Scheme (openURL)
+// • App Group (UserDefaults, FileManager)
+// • XPC (Extension ↔ Host App)`}/>
+        <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>
+          <b>핵심 차이</b>: 프로세스는 <b>격리</b>, 스레드는 <b>공유</b>.<br/>
+          공유하니까 빠르지만 → 동기화 문제(Race Condition) 발생.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 35. SYNC PRIMITIVES & DEADLOCK
+function SyncPrimDemo({t}) {
+  const [mode,setMode]=useState("mutex");
+  const [locked,setLocked]=useState(false);
+  const [deadlocked,setDeadlocked]=useState(false);
+  const [sem,setSem]=useState(2);
+  const [waiting,setWaiting]=useState([]);
+  const acquireSem=()=>{if(sem>0)setSem(s=>s-1);else setWaiting(w=>[...w,"Thread-"+(w.length+3)])};
+  const releaseSem=()=>{if(waiting.length>0){setWaiting(w=>w.slice(1))}else setSem(s=>Math.min(s+1,2))};
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+      {[["mutex","🔒 Mutex/Lock",t.blue],["semaphore","🚦 Semaphore",t.grn],["deadlock","💀 Deadlock",t.red]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>{setMode(m);setLocked(false);setDeadlocked(false);setSem(2);setWaiting([])}} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        {mode==="mutex"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>Mutex — 상호 배제</div>
+          <div style={{display:"flex",justifyContent:"center",gap:20,alignItems:"center"}}>
+            <div style={{background:locked?t.redBg:t.grnBg,border:`2px solid ${locked?t.red:t.grn}`,borderRadius:14,padding:16,textAlign:"center",transition:"all .4s",minWidth:100}}>
+              <div style={{fontSize:28}}>{locked?"🔒":"🔓"}</div>
+              <div style={{fontFamily:"monospace",fontSize:12,color:locked?t.red:t.grn,marginTop:4}}>{locked?"잠김":"열림"}</div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+            <Btn t={t} color={t.red} onClick={()=>setLocked(true)} disabled={locked}>lock()</Btn>
+            <Btn t={t} color={t.grn} onClick={()=>setLocked(false)} disabled={!locked}>unlock()</Btn>
+          </div>
+          <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>한 번에 1개 스레드만 진입. 다른 스레드는 unlock까지 대기.</InfoBox>
+        </div>}
+        {mode==="semaphore"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>Semaphore(2) — 동시 접근 제한</div>
+          <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+            {[0,1].map(i=>(
+              <div key={i} style={{background:i<(2-sem)?t.blueBg:t.sur2,border:`1.5px solid ${i<(2-sem)?t.blueBrd:t.bdr}`,borderRadius:10,padding:"12px 18px",textAlign:"center",transition:"all .4s"}}>
+                <div style={{fontFamily:"monospace",fontSize:12,color:i<(2-sem)?t.blue:t.tx3}}>슬롯 {i+1}</div>
+                <div style={{fontSize:20,marginTop:4}}>{i<(2-sem)?"🏃":"⬜"}</div>
+              </div>
+            ))}
+          </div>
+          {waiting.length>0&&<div style={{color:t.amb,fontSize:12,textAlign:"center"}}>대기 중: {waiting.join(", ")}</div>}
+          <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+            <Btn t={t} color={t.blue} onClick={acquireSem}>wait() (진입)</Btn>
+            <Btn t={t} color={t.grn} onClick={releaseSem}>signal() (해제)</Btn>
+          </div>
+        </div>}
+        {mode==="deadlock"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>Deadlock — 교착 상태</div>
+          <div style={{display:"flex",justifyContent:"center",gap:20,alignItems:"center",minHeight:100}}>
+            <div style={{background:deadlocked?t.redBg:t.blueBg,border:`2px solid ${deadlocked?t.red:t.blue}`,borderRadius:14,padding:14,textAlign:"center",transition:"all .5s"}}>
+              <div style={{fontFamily:"monospace",fontSize:12,fontWeight:600}}>Thread A</div>
+              <div style={{fontSize:10,color:t.tx3}}>Lock 1 보유</div>
+              <div style={{fontSize:10,color:deadlocked?t.red:t.tx3}}>{deadlocked?"Lock 2 대기...":"Lock 2 필요"}</div>
+            </div>
+            {deadlocked&&<div style={{color:t.red,fontSize:20}}>💀</div>}
+            <div style={{background:deadlocked?t.redBg:t.purBg,border:`2px solid ${deadlocked?t.red:t.pur}`,borderRadius:14,padding:14,textAlign:"center",transition:"all .5s"}}>
+              <div style={{fontFamily:"monospace",fontSize:12,fontWeight:600}}>Thread B</div>
+              <div style={{fontSize:10,color:t.tx3}}>Lock 2 보유</div>
+              <div style={{fontSize:10,color:deadlocked?t.red:t.tx3}}>{deadlocked?"Lock 1 대기...":"Lock 1 필요"}</div>
+            </div>
+          </div>
+          <Btn t={t} color={t.red} onClick={()=>setDeadlocked(true)} disabled={deadlocked} full>교착 상태 시뮬레이션</Btn>
+          {deadlocked&&<><div className="pi sk" style={{background:t.redBg,border:`1px solid ${t.redBrd}`,borderRadius:10,padding:10,color:t.red,fontSize:12,textAlign:"center"}}>💀 서로의 Lock을 기다리며 영원히 멈춤!</div><Btn t={t} color={t.tx2} onClick={()=>setDeadlocked(false)}>↺</Btn></>}
+        </div>}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={mode==="mutex"?`// NSLock — 가장 기본적인 Lock
+let lock = NSLock()
+lock.lock()
+// 임계 영역 (Critical Section)
+sharedResource += 1
+lock.unlock()
+
+// os_unfair_lock — 가장 빠른 Lock
+var unfairLock = os_unfair_lock()
+os_unfair_lock_lock(&unfairLock)
+sharedResource += 1
+os_unfair_lock_unlock(&unfairLock)
+
+// DispatchQueue로 동기화 (추천)
+let serialQ = DispatchQueue(label: "sync")
+serialQ.sync { sharedResource += 1 }`:mode==="semaphore"?`// DispatchSemaphore
+let sem = DispatchSemaphore(value: 2)
+// 최대 2개 스레드 동시 실행
+
+// 진입
+sem.wait()   // value -= 1
+doWork()
+sem.signal() // value += 1
+
+// value가 0이면 wait()에서 블록됨
+// signal()이 올 때까지 대기
+
+// 실전 사용:
+// ① API 동시 요청 수 제한
+let apiSem = DispatchSemaphore(value: 3)
+// ② 비동기 → 동기 변환 (주의!)
+let sync = DispatchSemaphore(value: 0)
+asyncCall { sync.signal() }
+sync.wait()  // ⚠ Main에서 쓰면 데드락!`:`// ⚠ iOS에서 흔한 데드락 패턴
+DispatchQueue.main.sync {
+    // 이미 Main에서 실행 중인데
+    // Main.sync 호출 → 💀 데드락!
+}
+
+// 해결: async 사용
+DispatchQueue.main.async {
+    // 안전하게 Main에 작업 추가
+}
+
+// 데드락 방지 규칙:
+// ① 같은 큐에 sync 호출 금지
+// ② Lock 획득 순서 통일
+// ③ 중첩 Lock 최소화
+// ④ 가능하면 Actor 사용 (Swift 5.5+)`}/>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 36. CACHE HIERARCHY
+function CacheDemo({t}) {
+  const levels=[
+    {name:"L1 Cache",size:"64KB",speed:"~1ns",color:t.red,pct:100},
+    {name:"L2 Cache",size:"256KB",speed:"~4ns",color:t.amb,pct:75},
+    {name:"L3 Cache",size:"8MB",speed:"~10ns",color:t.blue,pct:50},
+    {name:"RAM (Main)",size:"6GB",speed:"~100ns",color:t.grn,pct:25},
+    {name:"SSD",size:"256GB",speed:"~100μs",color:t.pur,pct:5},
+  ];
+  const [mode,setMode]=useState("struct");
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>메모리 계층 구조</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {levels.map((l,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:80,fontFamily:"monospace",fontSize:11,color:l.color,fontWeight:600,textAlign:"right"}}>{l.name}</div>
+              <div style={{flex:1,height:20,background:t.sur2,borderRadius:6,overflow:"hidden"}}>
+                <div style={{width:`${l.pct}%`,height:"100%",background:l.color,borderRadius:6,opacity:0.7,transition:"all .5s"}}/>
+              </div>
+              <div style={{width:60,fontFamily:"monospace",fontSize:10,color:t.tx3,textAlign:"right"}}>{l.speed}</div>
+            </div>
+          ))}
+        </div>
+        <InfoBox t={t} color={t.amb} bg={t.ambBg} brd={t.ambBrd}>위로 갈수록 빠르고 작음. CPU는 L1부터 찾고 없으면(cache miss) 아래로 내려감.</InfoBox>
+      </Panel>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>캐시 친화적 코드</div>
+        <div style={{display:"flex",gap:8,marginBottom:8}}>
+          {[["struct","struct 배열",t.grn],["class","class 배열",t.red]].map(([m,l,c])=>(
+            <button key={m} className="sb" onClick={()=>setMode(m)} style={{flex:1,padding:8,borderRadius:10,border:`1.5px solid ${mode===m?c:t.bdr}`,background:mode===m?`${c}15`:"transparent",color:mode===m?c:t.tx2,fontSize:12,fontWeight:600}}>{l}</button>
+          ))}
+        </div>
+        {mode==="struct"?<div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{display:"flex",gap:2,justifyContent:"center"}}>
+            {[1,2,3,4,5,6].map(i=><div key={i} style={{width:40,height:36,display:"flex",alignItems:"center",justifyContent:"center",background:t.grnBg,border:`1.5px solid ${t.grnBrd}`,borderRadius:6,fontFamily:"monospace",fontSize:11,color:t.grn}}>P{i}</div>)}
+          </div>
+          <div style={{textAlign:"center",fontSize:11,color:t.grn}}>연속 메모리 → 캐시 라인에 한꺼번에 로드</div>
+        </div>:<div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{display:"flex",gap:2,justifyContent:"center"}}>
+            {[1,2,3,4,5,6].map(i=><div key={i} style={{width:40,height:36,display:"flex",alignItems:"center",justifyContent:"center",background:i%2===0?t.redBg:t.sur2,border:`1.5px solid ${t.redBrd}`,borderRadius:6,fontFamily:"monospace",fontSize:11,color:t.red}}>→P{i}</div>)}
+          </div>
+          <div style={{textAlign:"center",fontSize:11,color:t.red}}>포인터 참조 → 힙에 흩어져 cache miss 빈발</div>
+        </div>}
+      </Panel>
+    </Grid2>
+    <Code t={t} code={`// struct 배열: 캐시 친화적 (연속 메모리)
+struct Point { var x, y: Double }  // 16바이트
+var points: [Point] = ...
+// [P1|P2|P3|P4|P5] ← 한 줄로 쭉!
+// 캐시 라인(64B)에 Point 4개 들어감
+// → 순회 시 cache hit율 높음
+
+// class 배열: 캐시 비친화적 (포인터 참조)
+class PointObj { var x, y: Double = 0 }
+var points: [PointObj] = ...
+// [ptr1|ptr2|ptr3] → 각각 힙의 다른 곳
+// → 순회 시 cache miss 빈발 → 느림
+
+// 실전 차이: 10만 개 순회 시
+// struct 배열 ≈ 2ms
+// class 배열  ≈ 15ms  (7배 느림!)
+
+// 최적화 팁:
+// ① Array of Struct > Array of Class
+// ② 순차 접근 > 랜덤 접근
+// ③ 작은 struct = Stack + 캐시 적중`}/>
+  </div>;
+}
+
+// 37. COMPILE & LINKING
+function CompileDemo({t}) {
+  const stages=[
+    {name:"소스 코드",icon:"📝",detail:".swift 파일",color:t.tx2},
+    {name:"파싱 (AST)",icon:"🌳",detail:"문법 분석 → 추상 구문 트리",color:t.blue},
+    {name:"타입 검사",icon:"🔍",detail:"Sema: 타입 추론 & 검증",color:t.pur},
+    {name:"SIL 생성",icon:"⚙️",detail:"Swift 중간 언어 (최적화)",color:t.amb},
+    {name:"LLVM IR",icon:"🔧",detail:"범용 중간 표현",color:t.cya},
+    {name:"기계어",icon:"💻",detail:".o 오브젝트 파일",color:t.grn},
+    {name:"링킹",icon:"🔗",detail:"라이브러리 연결 → 실행파일",color:t.red},
+  ];
+  const [step,setStep]=useState(-1);
+  const [running,setRunning]=useState(false);
+  const run=()=>{setRunning(true);setStep(0);stages.forEach((_,i)=>{setTimeout(()=>{setStep(i);if(i===stages.length-1)setRunning(false)},i*500)})};
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>Swift 컴파일 파이프라인</div>
+        <div style={{display:"flex",flexDirection:"column",gap:4}}>
+          {stages.map((s,i)=>(
+            <div key={i} className={step===i?"pi":""} style={{display:"flex",alignItems:"center",gap:10,background:step>=i?`${s.color}15`:t.sur2,border:`1.5px solid ${step>=i?`${s.color}40`:t.bdr}`,borderRadius:10,padding:"8px 12px",transition:"all .4s"}}>
+              <span style={{fontSize:18}}>{s.icon}</span>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:"monospace",fontSize:12,fontWeight:600,color:step>=i?s.color:t.tx3}}>{s.name}</div>
+                <div style={{fontSize:10,color:t.tx3}}>{s.detail}</div>
+              </div>
+              {step>=i&&<span style={{color:s.color,fontSize:12}}>✓</span>}
+            </div>
+          ))}
+        </div>
+        <Btn t={t} color={t.blue} onClick={run} disabled={running} full>{running?"컴파일 중...":"▶ 빌드 시작"}</Btn>
+        {step>=6&&<Btn t={t} color={t.tx2} onClick={()=>setStep(-1)}>↺</Btn>}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// 컴파일 과정
+// ① 파싱: 소스 → AST (구문 트리)
+// ② Sema: 타입 추론 & 타입 검사
+// ③ SILGen: AST → SIL (Swift IL)
+//    - Raw SIL → 최적화 → Canonical SIL
+// ④ IRGen: SIL → LLVM IR
+// ⑤ LLVM: IR → 기계어 (.o)
+// ⑥ Linker: .o 파일들 + 라이브러리 → 실행파일
+
+// SIL이 중요한 이유:
+// • ARC retain/release 삽입 지점
+// • 제네릭 특수화 (specialization)
+// • 인라이닝, 탈가상화 최적화
+
+// 링킹 종류:
+// Static: 라이브러리 코드를 앱에 복사
+// Dynamic: 실행 시 dyld가 연결
+// → .framework = dynamic library
+
+// ABI 안정성 (Swift 5.0+)
+// Swift 런타임이 OS에 내장
+// → 앱 크기 감소, 호환성 보장`}/>
+        <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>
+          <b>Whole Module Optimization</b>: 모든 .swift를 한번에 컴파일 → 인라이닝, 제네릭 특수화 등 강력한 최적화 가능.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 38. SYSTEM CALL & I/O
+function SyscallDemo({t}) {
+  const [step,setStep]=useState(-1);
+  const layers=[
+    {name:"Swift 코드",example:'FileManager.default.contents(atPath:"f.txt")',color:t.blue},
+    {name:"Foundation",example:"NSData → open() + read()",color:t.pur},
+    {name:"System Call",example:"syscall(SYS_read, fd, buf, count)",color:t.amb},
+    {name:"Kernel",example:"VFS → 파일시스템 → 디스크 드라이버",color:t.red},
+    {name:"Hardware",example:"SSD/NVMe 컨트롤러",color:t.tx2},
+  ];
+  const run=()=>{setStep(0);layers.forEach((_,i)=>{setTimeout(()=>setStep(i),i*400)})};
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>파일 읽기: 앱 → 커널 → 하드웨어</div>
+        <div style={{display:"flex",flexDirection:"column",gap:4}}>
+          {layers.map((l,i)=>(
+            <div key={i} className={step===i?"pi":""} style={{background:step>=i?`${l.color}15`:t.sur2,border:`1.5px solid ${step>=i?`${l.color}40`:t.bdr}`,borderRadius:10,padding:"8px 12px",transition:"all .4s"}}>
+              <div style={{fontFamily:"monospace",fontSize:12,fontWeight:600,color:step>=i?l.color:t.tx3}}>{l.name}</div>
+              <div style={{fontFamily:"monospace",fontSize:10,color:t.tx3,marginTop:2}}>{l.example}</div>
+            </div>
+          ))}
+        </div>
+        <Btn t={t} color={t.blue} onClick={run} full>▶ 파일 읽기 시뮬레이션</Btn>
+        {step>=4&&<InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>✅ 데이터가 커널 → 유저 공간으로 복사 완료!</InfoBox>}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// Swift에서 시스템 콜은 보이지 않음
+// 하지만 모든 I/O는 결국 시스템 콜!
+
+// 파일 읽기 내부 동작
+let data = try Data(contentsOf: url)
+// 내부: open() → read() → close()
+
+// 네트워크도 시스템 콜
+URLSession.shared.dataTask(with: url)
+// 내부: socket() → connect() → read()
+
+// POSIX API 직접 사용 (드물지만 가능)
+import Darwin
+let fd = open("/tmp/test.txt", O_RDONLY)
+var buf = [UInt8](repeating: 0, count: 1024)
+let n = read(fd, &buf, 1024)
+close(fd)
+
+// User Mode vs Kernel Mode
+// 시스템 콜 = User → Kernel 전환
+// Context Switch 비용 발생
+// → 작은 I/O 여러 번 < 큰 I/O 한 번`}/>
+        <InfoBox t={t} color={t.amb} bg={t.ambBg} brd={t.ambBrd}>
+          <b>Sandbox</b>: iOS 앱은 자기 컨테이너 밖의 파일에 접근하는 시스템 콜이 커널에 의해 차단됩니다.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 39. ENDIAN & BIT OPERATIONS
+function EndianDemo({t}) {
+  const [val]=useState(0x12345678);
+  const bigEndian=["12","34","56","78"];
+  const littleEndian=["78","56","34","12"];
+  const [mode,setMode]=useState("endian");
+  const [bits,setBits]=useState(0b10110011);
+  const [op,setOp]=useState("and");
+  const mask=0b11110000;
+  const results={and:bits&mask,or:bits|mask,xor:bits^mask,not:(~bits)&0xFF,left:(bits<<1)&0xFF,right:bits>>1};
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+      {[["endian","🔀 엔디안",t.blue],["bitops","⚡ 비트 연산",t.pur]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>setMode(m)} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        {mode==="endian"?<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>0x12345678을 메모리에 저장하면?</div>
+          <div>
+            <div style={{color:t.blue,fontSize:12,fontWeight:600,marginBottom:4}}>Big Endian (네트워크 바이트 오더)</div>
+            <div style={{display:"flex",gap:4}}>{bigEndian.map((b,i)=>(
+              <div key={i} style={{flex:1,background:t.blueBg,border:`1.5px solid ${t.blueBrd}`,borderRadius:8,padding:"8px 4px",textAlign:"center",fontFamily:"monospace",fontSize:14,fontWeight:700,color:t.blue}}>{b}<div style={{fontSize:9,color:t.tx3,marginTop:2}}>+{i}</div></div>
+            ))}</div>
+          </div>
+          <div>
+            <div style={{color:t.grn,fontSize:12,fontWeight:600,marginBottom:4}}>Little Endian (ARM/x86, iOS)</div>
+            <div style={{display:"flex",gap:4}}>{littleEndian.map((b,i)=>(
+              <div key={i} style={{flex:1,background:t.grnBg,border:`1.5px solid ${t.grnBrd}`,borderRadius:8,padding:"8px 4px",textAlign:"center",fontFamily:"monospace",fontSize:14,fontWeight:700,color:t.grn}}>{b}<div style={{fontSize:9,color:t.tx3,marginTop:2}}>+{i}</div></div>
+            ))}</div>
+          </div>
+          <InfoBox t={t} color={t.amb} bg={t.ambBg} brd={t.ambBrd}>iOS(ARM)는 <b>Little Endian</b>. 네트워크는 <b>Big Endian</b>. 바이너리 데이터 파싱 시 변환 필수!</InfoBox>
+        </div>:<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontWeight:600,fontSize:14}}>비트 연산</div>
+          <div style={{fontFamily:"monospace",fontSize:12,textAlign:"center",color:t.tx2}}>bits = {bits.toString(2).padStart(8,"0")} ({bits})</div>
+          <div style={{display:"flex",gap:4,flexWrap:"wrap",justifyContent:"center"}}>
+            {[["and","AND &"],["or","OR |"],["xor","XOR ^"],["not","NOT ~"],["left","<< 1"],["right",">> 1"]].map(([o,l])=>(
+              <button key={o} className="sb" onClick={()=>setOp(o)} style={{padding:"5px 10px",borderRadius:8,border:`1.5px solid ${op===o?t.pur:t.bdr}`,background:op===o?t.purBg:"transparent",color:op===o?t.pur:t.tx2,fontSize:11,fontFamily:"monospace",fontWeight:600}}>{l}</button>
+            ))}
+          </div>
+          <div style={{background:t.sur2,borderRadius:10,padding:10,fontFamily:"monospace",fontSize:12,lineHeight:2}}>
+            <div style={{color:t.tx2}}>{bits.toString(2).padStart(8,"0")} (bits)</div>
+            {op!=="not"&&op!=="left"&&op!=="right"&&<div style={{color:t.tx3}}>{mask.toString(2).padStart(8,"0")} (mask)</div>}
+            <div style={{borderTop:`1px solid ${t.bdr}`,marginTop:4,paddingTop:4,color:t.pur,fontWeight:700}}>{results[op].toString(2).padStart(8,"0")} = {results[op]}</div>
+          </div>
+        </div>}
+      </Panel>
+      <Code t={t} code={mode==="endian"?`// 엔디안 변환 (Swift)
+let value: UInt32 = 0x12345678
+
+// Host → Network (Big Endian)
+let big = value.bigEndian
+// Network → Host
+let host = UInt32(bigEndian: big)
+
+// Data에서 바이트 직접 읽기
+let data = Data([0x00, 0x01, 0x00, 0x02])
+let width = data.withUnsafeBytes {
+    $0.load(as: UInt16.self).bigEndian
+}
+// width = 256 (0x0100)
+
+// ⚠ 바이너리 파싱 시 주의:
+// • 이미지 헤더 (PNG, JPEG)
+// • 네트워크 패킷
+// • 외부 기기 통신 (BLE 등)`:`// Swift 비트 연산
+let flags: UInt8 = 0b10110011
+
+// OptionSet — 비트 플래그 패턴
+struct Permissions: OptionSet {
+    let rawValue: UInt8
+    static let read    = Permissions(rawValue: 1 << 0)
+    static let write   = Permissions(rawValue: 1 << 1)
+    static let execute = Permissions(rawValue: 1 << 2)
+}
+
+var perm: Permissions = [.read, .write]
+perm.contains(.read)   // true
+perm.insert(.execute)
+// rawValue = 0b00000111 (7)
+
+// 실전 사용:
+// • UIView.AutoresizingMask
+// • UIControlEvents
+// • 해시 계산 (hashValue)`}/>
+    </Grid2>
+  </div>;
+}
+
+// 40. TYPE INFERENCE
+function TypeInferDemo({t}) {
+  const examples=[
+    {code:"let x = 42",inferred:"Int",direction:"→",reason:"정수 리터럴 기본 = Int"},
+    {code:'let s = "hello"',inferred:"String",direction:"→",reason:"문자열 리터럴 기본 = String"},
+    {code:"let arr = [1, 2, 3]",inferred:"[Int]",direction:"→",reason:"원소 타입으로 배열 타입 추론"},
+    {code:"let fn = { $0 * 2 }",inferred:"(Int) → Int",direction:"←→",reason:"문맥에서 양방향 추론"},
+    {code:'let r: Double = 3',inferred:"Double",direction:"←",reason:"선언 타입이 리터럴 해석 결정"},
+  ];
+  const [sel,setSel]=useState(0);
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>타입 추론 시각화</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {examples.map((ex,i)=>(
+            <div key={i} className="sb" onClick={()=>setSel(i)} style={{display:"flex",alignItems:"center",gap:8,background:sel===i?t.blueBg:t.sur2,border:`1.5px solid ${sel===i?t.blueBrd:t.bdr}`,borderRadius:10,padding:"8px 12px",cursor:"pointer"}}>
+              <div style={{flex:1,fontFamily:"monospace",fontSize:12,color:t.tx}}>{ex.code}</div>
+              <span style={{color:t.amb,fontSize:14}}>{ex.direction}</span>
+              <Tag t={t} color={t.blue}>{ex.inferred}</Tag>
+            </div>
+          ))}
+        </div>
+        <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>
+          <b>{examples[sel].code}</b><br/>
+          추론: <b>{examples[sel].inferred}</b> — {examples[sel].reason}
+        </InfoBox>
+        <div style={{display:"flex",gap:8}}>
+          <div style={{flex:1,background:t.grnBg,border:`1px solid ${t.grnBrd}`,borderRadius:10,padding:10,textAlign:"center"}}>
+            <div style={{color:t.grn,fontWeight:600,fontSize:12}}>→ 순방향</div>
+            <div style={{color:t.tx3,fontSize:10,marginTop:2}}>값에서 타입을 추론</div>
+          </div>
+          <div style={{flex:1,background:t.purBg,border:`1px solid ${t.purBrd}`,borderRadius:10,padding:10,textAlign:"center"}}>
+            <div style={{color:t.pur,fontWeight:600,fontSize:12}}>← 역방향</div>
+            <div style={{color:t.tx3,fontSize:10,marginTop:2}}>기대 타입이 값 해석 결정</div>
+          </div>
+        </div>
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// 순방향 추론: 값 → 타입
+let x = 42        // Int
+let y = 3.14      // Double
+let z = true      // Bool
+let a = [1, 2]    // [Int]
+let d = ["k": 1]  // [String: Int]
+
+// 역방향 추론: 타입 → 값 해석
+let pi: Float = 3.14  // 3.14는 Float으로 해석
+let byte: UInt8 = 255  // 255는 UInt8으로
+
+// 양방향 추론 (클로저)
+let nums = [1, 2, 3]
+let doubled = nums.map { $0 * 2 }
+// 컴파일러가 아는 것:
+// map의 시그니처 + nums의 원소 타입
+// → $0은 Int, 결과는 [Int]
+
+// 추론 한계 → 명시 필요
+let empty: [String] = []  // 빈 배열은 추론 불가
+let any: Any = 42         // 의도적 타입 확장`}/>
+        <InfoBox t={t} color={t.amb} bg={t.ambBg} brd={t.ambBrd}>
+          <b>컴파일 속도 팁</b>: 복잡한 표현식에서 타입 추론이 느려질 수 있음. 긴 체이닝이나 딕셔너리 리터럴에 타입 명시하면 빌드 빨라짐.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 41. VALUE SEMANTICS vs REFERENCE SEMANTICS
+function ValueSemDemo({t}) {
+  const [mode,setMode]=useState("value");
+  const [vA,setVA]=useState(10);
+  const [vB,setVB]=useState(10);
+  const [rA,setRA]=useState(10);
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+      {[["value","🧊 값 의미론",t.blue],["ref","🔗 참조 의미론",t.red],["why","❓ 왜 중요한가",t.pur]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>{setMode(m);setVA(10);setVB(10);setRA(10)}} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        {mode==="value"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>값 의미론: 독립적인 복사본</div>
+          <div style={{display:"flex",gap:16,justifyContent:"center"}}>
+            <div style={{background:t.blueBg,border:`2px solid ${t.blueBrd}`,borderRadius:14,padding:16,textAlign:"center",minWidth:100}}>
+              <div style={{fontSize:10,color:t.tx3}}>var a</div>
+              <div style={{fontFamily:"monospace",fontSize:28,fontWeight:700,color:t.blue}}>{vA}</div>
+              <Btn t={t} color={t.blue} onClick={()=>setVA(v=>v+1)}>a += 1</Btn>
+            </div>
+            <div style={{background:t.grnBg,border:`2px solid ${t.grnBrd}`,borderRadius:14,padding:16,textAlign:"center",minWidth:100}}>
+              <div style={{fontSize:10,color:t.tx3}}>var b = a</div>
+              <div style={{fontFamily:"monospace",fontSize:28,fontWeight:700,color:t.grn}}>{vB}</div>
+              <Btn t={t} color={t.grn} onClick={()=>setVB(v=>v+1)}>b += 1</Btn>
+            </div>
+          </div>
+          <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>a를 바꿔도 b는 그대로! 서로 <b>독립</b>.</InfoBox>
+        </div>}
+        {mode==="ref"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>참조 의미론: 같은 인스턴스</div>
+          <div style={{display:"flex",gap:16,justifyContent:"center",alignItems:"center"}}>
+            <div style={{background:t.redBg,border:`2px solid ${t.redBrd}`,borderRadius:14,padding:16,textAlign:"center",minWidth:80}}>
+              <div style={{fontSize:10,color:t.tx3}}>var a</div>
+              <div style={{fontSize:10,color:t.red}}>→ ref</div>
+            </div>
+            <div style={{background:t.ambBg,border:`2px solid ${t.ambBrd}`,borderRadius:14,padding:20,textAlign:"center"}}>
+              <div style={{fontFamily:"monospace",fontSize:28,fontWeight:700,color:t.amb}}>{rA}</div>
+              <Btn t={t} color={t.amb} onClick={()=>setRA(v=>v+1)}>값 변경</Btn>
+            </div>
+            <div style={{background:t.redBg,border:`2px solid ${t.redBrd}`,borderRadius:14,padding:16,textAlign:"center",minWidth:80}}>
+              <div style={{fontSize:10,color:t.tx3}}>var b</div>
+              <div style={{fontSize:10,color:t.red}}>→ ref</div>
+            </div>
+          </div>
+          <InfoBox t={t} color={t.red} bg={t.redBg} brd={t.redBrd}>a와 b가 같은 객체를 가리킴. 한쪽 변경 = 양쪽 변경!</InfoBox>
+        </div>}
+        {mode==="why"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontWeight:600,fontSize:14}}>값 의미론이 중요한 이유</div>
+          {[["🔒 스레드 안전","복사본이므로 다른 스레드가 동시에 수정 불가",t.grn],
+            ["🧪 예측 가능","함수에 넘겨도 원본이 바뀌지 않음",t.blue],
+            ["⚖️ Equatable 자동","모든 프로퍼티 비교로 동등성 판단 가능",t.pur],
+            ["📸 Undo 쉬움","이전 상태 = 그냥 이전 복사본 저장",t.amb]
+          ].map(([title,desc,c],i)=>(
+            <div key={i} style={{background:`${c}15`,border:`1px solid ${c}40`,borderRadius:10,padding:"8px 12px"}}>
+              <div style={{fontWeight:600,fontSize:12,color:c}}>{title}</div>
+              <div style={{fontSize:11,color:t.tx2,marginTop:2}}>{desc}</div>
+            </div>
+          ))}
+        </div>}
+      </Panel>
+      <Code t={t} code={mode==="why"?`// SwiftUI는 값 의미론 위에 설계됨
+struct AppState {
+    var count = 0
+    var name = "Leeo"
+}
+
+// 이전 상태 저장 = 그냥 복사
+let backup = state  // 독립적 복사본
+state.count += 1
+// backup.count는 여전히 0 → Undo 가능!
+
+// Equatable 자동 합성
+struct Point: Equatable {
+    var x, y: Double
+    // == 자동 생성! (모든 프로퍼티 비교)
+}
+
+// Hashable도 자동 합성 가능
+struct User: Hashable {
+    var id: Int, name: String
+}
+let set: Set<User> = [user1, user2]`:`// struct = 값 의미론
+struct Point {
+    var x: Double
+    var y: Double
+}
+var a = Point(x: 1, y: 2)
+var b = a      // 복사!
+b.x = 99
+print(a.x)     // 1 (안 바뀜)
+
+// class = 참조 의미론
+class PointRef {
+    var x: Double = 0
+    var y: Double = 0
+}
+var a = PointRef()
+var b = a      // 같은 인스턴스 공유
+b.x = 99
+print(a.x)     // 99 (바뀜!)
+
+// mutating — struct 메서드에서 self 수정
+struct Counter {
+    var count = 0
+    mutating func increment() {
+        count += 1  // 새 값으로 교체
+    }
+}`}/>
+    </Grid2>
+  </div>;
+}
+
+// 42. HIGHER-ORDER FUNCTIONS
+function HigherOrderDemo({t}) {
+  const [fn,setFn]=useState("map");
+  const input=[1,2,3,4,5,6];
+  const results={
+    map:input.map(x=>x*2),
+    filter:input.filter(x=>x%2===0),
+    reduce:[input.reduce((a,b)=>a+b,0)],
+    compactMap:[1,null,3,null,5].map(x=>x).filter(x=>x!==null),
+    flatMap:[[1,2],[3,4],[5,6]],
+  };
+  const flatMapResult=[1,2,3,4,5,6];
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:6,justifyContent:"center",flexWrap:"wrap"}}>
+      {[["map","map",t.blue],["filter","filter",t.grn],["reduce","reduce",t.amb],["compactMap","compactMap",t.pur],["flatMap","flatMap",t.cya]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>setFn(m)} style={{opacity:fn===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>{fn} 시각화</div>
+        <div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
+          <div>
+            <div style={{fontSize:10,color:t.tx3,marginBottom:4}}>입력</div>
+            <div style={{display:"flex",gap:4}}>
+              {(fn==="flatMap"?results.flatMap:fn==="compactMap"?[1,null,3,null,5]:input).map((v,i)=>(
+                <div key={i} style={{width:fn==="flatMap"?70:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",background:v===null?t.redBg:t.sur2,border:`1.5px solid ${v===null?t.redBrd:t.bdr}`,borderRadius:8,fontFamily:"monospace",fontSize:fn==="flatMap"?11:14,fontWeight:600,color:v===null?t.red:t.tx}}>{v===null?"nil":fn==="flatMap"?JSON.stringify(v):v}</div>
+              ))}
+            </div>
+          </div>
+          <div style={{color:t.tx3,fontSize:20}}>↓ {fn}</div>
+          <div>
+            <div style={{fontSize:10,color:t.tx3,marginBottom:4}}>결과</div>
+            <div style={{display:"flex",gap:4}}>
+              {(fn==="flatMap"?flatMapResult:fn==="reduce"?results.reduce:results[fn]).map((v,i)=>(
+                <div key={i} className="pi" style={{width:fn==="reduce"?60:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",background:t.blueBg,border:`1.5px solid ${t.blueBrd}`,borderRadius:8,fontFamily:"monospace",fontSize:14,fontWeight:700,color:t.blue}}>{v}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Panel>
+      <Code t={t} code={fn==="map"?`// map: 각 원소를 변환
+let nums = [1, 2, 3, 4, 5, 6]
+let doubled = nums.map { $0 * 2 }
+// [2, 4, 6, 8, 10, 12]
+
+// 함수를 인자로 전달 = 고차 함수
+func double(_ n: Int) -> Int { n * 2 }
+let result = nums.map(double)
+
+// 체이닝
+let result = nums
+    .map { $0 * 2 }
+    .map { String($0) }
+// ["2", "4", "6", "8", "10", "12"]`:fn==="filter"?`// filter: 조건에 맞는 것만
+let nums = [1, 2, 3, 4, 5, 6]
+let evens = nums.filter { $0 % 2 == 0 }
+// [2, 4, 6]
+
+// 체이닝 예시
+let result = users
+    .filter { $0.isActive }
+    .filter { $0.age >= 18 }
+    .map { $0.name }
+// 활성 성인 사용자 이름만 추출`:fn==="reduce"?`// reduce: 하나의 값으로 축약
+let nums = [1, 2, 3, 4, 5, 6]
+let sum = nums.reduce(0) { acc, num in
+    acc + num
+}
+// 0 + 1 + 2 + 3 + 4 + 5 + 6 = 21
+
+// 짧게: reduce(0, +)
+let sum = nums.reduce(0, +)
+
+// 실전: 딕셔너리 만들기
+let dict = users.reduce(into: [:]) {
+    $0[$1.id] = $1
+}`:fn==="compactMap"?`// compactMap: nil 제거 + 변환
+let strs = ["1", nil, "3", nil, "5"]
+let nums = strs.compactMap { $0 }
+// ["1", "3", "5"]
+
+// Optional 변환에서 유용
+let strings = ["1", "two", "3"]
+let nums = strings.compactMap { Int($0) }
+// [1, 3]  ("two"는 Int 변환 실패 → nil → 제거)
+
+// map vs compactMap
+strings.map { Int($0) }      // [1?, nil, 3?]
+strings.compactMap { Int($0) } // [1, 3]`:`// flatMap: 중첩 배열 평탄화
+let nested = [[1, 2], [3, 4], [5, 6]]
+let flat = nested.flatMap { $0 }
+// [1, 2, 3, 4, 5, 6]
+
+// 실전: 각 사용자의 주문 목록 합치기
+let allOrders = users.flatMap { $0.orders }
+
+// map vs flatMap
+nested.map { $0 }     // [[1,2],[3,4],[5,6]]
+nested.flatMap { $0 }  // [1,2,3,4,5,6]`}/>
+    </Grid2>
+  </div>;
+}
+
+// 43. LAZY EVALUATION
+function LazyEvalDemo({t}) {
+  const [mode,setMode]=useState("lazy");
+  const [eagerSteps,setEagerSteps]=useState([]);
+  const [lazySteps,setLazySteps]=useState([]);
+  const [running,setRunning]=useState(false);
+  const runEager=()=>{setRunning(true);setEagerSteps([]);
+    const steps=["map 1→2","map 2→4","map 3→6","map 4→8","map 5→10","filter 2✓","filter 4✓","filter 6✓","filter 8✓","filter 10✓","first → 2"];
+    steps.forEach((s,i)=>{setTimeout(()=>{setEagerSteps(p=>[...p,s]);if(i===steps.length-1)setRunning(false)},i*200)});
+  };
+  const runLazy=()=>{setRunning(true);setLazySteps([]);
+    const steps=["map 1→2","filter 2✓ → 찾음!","first → 2 (나머지 건너뜀)"];
+    steps.forEach((s,i)=>{setTimeout(()=>{setLazySteps(p=>[...p,s]);if(i===steps.length-1)setRunning(false)},i*400)});
+  };
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>Eager vs Lazy 비교</div>
+        <div style={{color:t.tx3,fontSize:12,marginBottom:8}}>[1,2,3,4,5].map(*2).filter(짝수).first</div>
+        <div style={{display:"flex",gap:10}}>
+          <div style={{flex:1}}>
+            <Btn t={t} color={t.red} onClick={runEager} disabled={running} full>Eager (기본)</Btn>
+            <div style={{display:"flex",flexDirection:"column",gap:2,marginTop:6}}>
+              {eagerSteps.map((s,i)=>(<div key={i} className="pi" style={{fontSize:10,fontFamily:"monospace",color:t.red,padding:"2px 6px",background:t.redBg,borderRadius:4}}>{s}</div>))}
+            </div>
+            {eagerSteps.length>0&&<div style={{fontSize:10,color:t.red,marginTop:4}}>총 {eagerSteps.length}단계</div>}
+          </div>
+          <div style={{flex:1}}>
+            <Btn t={t} color={t.grn} onClick={runLazy} disabled={running} full>Lazy</Btn>
+            <div style={{display:"flex",flexDirection:"column",gap:2,marginTop:6}}>
+              {lazySteps.map((s,i)=>(<div key={i} className="pi" style={{fontSize:10,fontFamily:"monospace",color:t.grn,padding:"2px 6px",background:t.grnBg,borderRadius:4}}>{s}</div>))}
+            </div>
+            {lazySteps.length>0&&<div style={{fontSize:10,color:t.grn,marginTop:4}}>총 {lazySteps.length}단계!</div>}
+          </div>
+        </div>
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// Eager: 전부 계산 후 결과
+let result = [1,2,3,4,5]
+    .map { $0 * 2 }      // [2,4,6,8,10] 전부 계산
+    .filter { $0 % 2 == 0 } // [2,4,6,8,10]
+    .first                   // 2
+
+// Lazy: 필요한 것만 계산
+let result = [1,2,3,4,5].lazy
+    .map { $0 * 2 }      // 아직 계산 안 함
+    .filter { $0 % 2 == 0 } // 아직 계산 안 함
+    .first                   // 이제야 1→2 계산, 조건 충족 → 끝!
+
+// lazy var — 프로퍼티 지연 초기화
+class VC: UIViewController {
+    lazy var label: UILabel = {
+        let l = UILabel()
+        l.text = "Hello"
+        return l
+    }()  // 처음 접근할 때 생성됨
+}
+
+// LazySequence — 무한 시퀀스 가능!
+let evens = (1...).lazy.filter { $0 % 2 == 0 }
+let first5 = Array(evens.prefix(5))
+// [2, 4, 6, 8, 10]`}/>
+        <InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>
+          <b>언제 lazy?</b>: 큰 컬렉션에서 일부만 필요할 때, 체이닝이 길 때, 무한 시퀀스가 필요할 때.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 44. STATIC vs DYNAMIC DISPATCH
+function DispatchDemo({t}) {
+  const [mode,setMode]=useState("static");
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+      {[["static","⚡ Static (Direct)",t.grn],["dynamic","🔄 Dynamic (vtable)",t.blue],["witness","📋 Witness Table",t.pur]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>setMode(m)} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        {mode==="static"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontWeight:600,fontSize:14}}>Static Dispatch — 컴파일 타임 결정</div>
+          <div style={{background:t.grnBg,border:`1.5px solid ${t.grnBrd}`,borderRadius:12,padding:14}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:24}}>⚡</span>
+              <div>
+                <div style={{fontFamily:"monospace",fontSize:13,color:t.grn,fontWeight:600}}>call 0x7fff_1234</div>
+                <div style={{fontSize:11,color:t.tx3}}>컴파일 시 주소 확정 → 즉시 점프</div>
+              </div>
+            </div>
+          </div>
+          <div style={{fontSize:12,color:t.tx2,lineHeight:1.7}}>적용: <b>struct</b> 메서드, <b>final class</b>, <b>private</b> 메서드, <b>static</b> 함수</div>
+          <InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>인라이닝 가능 → 함수 호출 오버헤드 제거. <b>가장 빠른 디스패치.</b></InfoBox>
+        </div>}
+        {mode==="dynamic"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontWeight:600,fontSize:14}}>Dynamic Dispatch — 런타임 결정</div>
+          <div style={{background:t.blueBg,border:`1.5px solid ${t.blueBrd}`,borderRadius:12,padding:14}}>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              <div style={{fontFamily:"monospace",fontSize:11,color:t.tx3}}>obj.vtable[methodIndex]</div>
+              {["draw() → Circle.draw","draw() → Square.draw","draw() → Triangle.draw"].map((s,i)=>(
+                <div key={i} style={{fontFamily:"monospace",fontSize:12,color:t.blue,background:t.sur2,borderRadius:6,padding:"4px 8px"}}>[{i}] {s}</div>
+              ))}
+            </div>
+          </div>
+          <div style={{fontSize:12,color:t.tx2}}>적용: <b>class</b> 메서드 (override 가능), <b>@objc</b></div>
+          <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>vtable 룩업 = 포인터 1회 역참조. Static보다 약간 느리지만 다형성 제공.</InfoBox>
+        </div>}
+        {mode==="witness"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontWeight:600,fontSize:14}}>Protocol Witness Table</div>
+          <div style={{background:t.purBg,border:`1.5px solid ${t.purBrd}`,borderRadius:12,padding:14}}>
+            <div style={{display:"flex",flexDirection:"column",gap:4}}>
+              <div style={{fontFamily:"monospace",fontSize:11,color:t.tx3}}>Drawable Witness Table for Circle:</div>
+              {["draw() → Circle.draw_impl","area() → Circle.area_impl"].map((s,i)=>(
+                <div key={i} style={{fontFamily:"monospace",fontSize:12,color:t.pur,background:t.sur2,borderRadius:6,padding:"4px 8px"}}>{s}</div>
+              ))}
+            </div>
+          </div>
+          <div style={{fontSize:12,color:t.tx2}}>적용: <b>프로토콜</b> 타입으로 사용 시 (any Drawable)</div>
+          <InfoBox t={t} color={t.pur} bg={t.purBg} brd={t.purBrd}>Existential Container(5 words) 안에 Witness Table 포인터 저장. <b>some</b> 쓰면 Static으로 최적화!</InfoBox>
+        </div>}
+      </Panel>
+      <Code t={t} code={`// struct → Static Dispatch (빠름)
+struct Circle {
+    func draw() { }  // 직접 호출
+}
+
+// class → Dynamic Dispatch (vtable)
+class Shape {
+    func draw() { }  // vtable 룩업
+}
+class Circle: Shape {
+    override func draw() { }  // vtable 교체
+}
+
+// final → Static으로 강제
+final class FastShape {
+    func draw() { }  // 직접 호출 (override 불가)
+}
+
+// private → 컴파일러가 final로 추론
+class MyVC {
+    private func helper() { }  // Static!
+}
+
+// 성능 비교 (대략)
+// Static:  ~0.3ns (인라이닝 가능)
+// vtable:  ~1.0ns
+// Witness: ~2.0ns + Existential 비용
+
+// 최적화 팁:
+// ① class에 final 붙이기
+// ② any 대신 some 사용
+// ③ WMO(Whole Module) 빌드 활성화`}/>
+    </Grid2>
+  </div>;
+}
+
+// 45. COVARIANCE & CONTRAVARIANCE
+function VarianceDemo({t}) {
+  const [mode,setMode]=useState("cov");
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+      {[["cov","공변 (Covariant)",t.blue],["contra","반변 (Contravariant)",t.red],["inv","불변 (Invariant)",t.amb]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>setMode(m)} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        {mode==="cov"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>공변: 출력 위치에서 서브타이핑 유지</div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+            <div style={{background:t.blueBg,border:`1.5px solid ${t.blueBrd}`,borderRadius:10,padding:"8px 16px",fontFamily:"monospace",fontSize:13,color:t.blue}}>Dog : Animal</div>
+            <span style={{color:t.tx3}}>↓ 같은 방향</span>
+            <div style={{background:t.grnBg,border:`1.5px solid ${t.grnBrd}`,borderRadius:10,padding:"8px 16px",fontFamily:"monospace",fontSize:13,color:t.grn}}>[Dog] → [Animal] ✅</div>
+          </div>
+          <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>Dog가 Animal의 서브타입이면, [Dog]도 [Animal]의 서브타입. <b>방향이 같다</b> = 공변.</InfoBox>
+        </div>}
+        {mode==="contra"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>반변: 입력 위치에서 서브타이핑 뒤집힘</div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+            <div style={{background:t.blueBg,border:`1.5px solid ${t.blueBrd}`,borderRadius:10,padding:"8px 16px",fontFamily:"monospace",fontSize:13,color:t.blue}}>Dog : Animal</div>
+            <span style={{color:t.tx3}}>↓ 반대 방향!</span>
+            <div style={{background:t.redBg,border:`1.5px solid ${t.redBrd}`,borderRadius:10,padding:"8px 16px",fontFamily:"monospace",fontSize:13,color:t.red}}>(Animal)→Void : (Dog)→Void</div>
+          </div>
+          <InfoBox t={t} color={t.red} bg={t.redBg} brd={t.redBrd}>Animal을 받는 함수는 Dog도 처리 가능 → (Animal→V)가 (Dog→V)의 서브타입. <b>방향이 반대</b> = 반변.</InfoBox>
+        </div>}
+        {mode==="inv"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>불변: 서브타이핑 없음</div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+            <div style={{background:t.ambBg,border:`1.5px solid ${t.ambBrd}`,borderRadius:10,padding:"8px 16px",fontFamily:"monospace",fontSize:13,color:t.amb}}>inout Dog ≠ inout Animal</div>
+          </div>
+          <InfoBox t={t} color={t.amb} bg={t.ambBg} brd={t.ambBrd}>읽기+쓰기 둘 다 하면 공변도 반변도 아님. 제네릭 타입 파라미터는 기본적으로 <b>불변</b>.</InfoBox>
+        </div>}
+      </Panel>
+      <Code t={t} code={`// 공변 (Covariant) — 출력 위치
+class Animal { }
+class Dog: Animal { }
+
+// 배열은 공변
+let dogs: [Dog] = [Dog()]
+let animals: [Animal] = dogs  // ✅ OK
+
+// 반환 타입은 공변
+func getDog() -> Dog { Dog() }
+let fn: () -> Animal = getDog  // ✅
+
+// 반변 (Contravariant) — 입력 위치
+func handleAnimal(_ a: Animal) { }
+let fn: (Dog) -> Void = handleAnimal  // ✅
+// Animal 핸들러는 Dog도 처리 가능
+
+// 불변 (Invariant) — 읽기+쓰기
+// var box: Box<Dog> → Box<Animal>  ❌
+// Box<Dog>에 Cat을 넣을 수 있게 되므로 위험!
+
+// 실전 규칙:
+// • 읽기만 (Producer) → 공변 (out)
+// • 쓰기만 (Consumer) → 반변 (in)
+// • 둘 다 → 불변`}/>
+    </Grid2>
+  </div>;
+}
+
+// 46. SOME vs ANY (Opaque & Existential)
+function SomAnyDemo({t}) {
+  const [mode,setMode]=useState("some");
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+      {[["some","some (불투명)",t.blue],["any","any (존재)",t.red],["compare","비교",t.pur]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>setMode(m)} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        {mode==="some"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontWeight:600,fontSize:14}}>some — 불투명 타입</div>
+          <div style={{background:t.blueBg,border:`2px solid ${t.blueBrd}`,borderRadius:14,padding:16,textAlign:"center"}}>
+            <div style={{fontSize:12,color:t.tx3}}>컴파일러만 아는 구체 타입</div>
+            <div style={{fontFamily:"monospace",fontSize:18,fontWeight:700,color:t.blue,margin:"8px 0"}}>some View</div>
+            <div style={{fontSize:11,color:t.tx3}}>= 실제로는 VStack&lt;Text&gt; 같은 구체 타입</div>
+          </div>
+          <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>
+            <b>항상 같은 타입</b> 반환. 컴파일러가 구체 타입을 알아서 <b>Static Dispatch + 인라이닝</b> 가능.
+          </InfoBox>
+        </div>}
+        {mode==="any"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontWeight:600,fontSize:14}}>any — 존재 타입 (Existential)</div>
+          <div style={{background:t.redBg,border:`2px solid ${t.redBrd}`,borderRadius:14,padding:16,textAlign:"center"}}>
+            <div style={{fontSize:12,color:t.tx3}}>Existential Container (5 words = 40바이트)</div>
+            <div style={{display:"flex",gap:4,justifyContent:"center",marginTop:8}}>
+              {["Value","Value","Value","Metadata","WitnessT"].map((s,i)=>(
+                <div key={i} style={{background:t.sur,borderRadius:6,padding:"4px 6px",fontFamily:"monospace",fontSize:9,color:t.red}}>{s}</div>
+              ))}
+            </div>
+          </div>
+          <InfoBox t={t} color={t.red} bg={t.redBg} brd={t.redBrd}>
+            <b>다른 타입도 가능</b>. 런타임에 타입 결정 → Witness Table 룩업. Heap 할당 가능. <b>느림.</b>
+          </InfoBox>
+        </div>}
+        {mode==="compare"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{fontWeight:600,fontSize:14}}>some vs any 비교</div>
+          {[["타입 일관성","항상 같은 타입","다른 타입 가능"],
+            ["성능","Static Dispatch","Dynamic Dispatch"],
+            ["메모리","Stack (인라이닝)","Existential Container"],
+            ["용도","반환 타입","컬렉션에 다른 타입 섞기"]
+          ].map(([label,some,any],i)=>(
+            <div key={i} style={{display:"flex",gap:4}}>
+              <div style={{width:80,fontSize:10,color:t.tx3,textAlign:"right",paddingTop:6}}>{label}</div>
+              <div style={{flex:1,background:t.blueBg,border:`1px solid ${t.blueBrd}`,borderRadius:8,padding:"5px 8px",fontSize:11,color:t.blue}}>{some}</div>
+              <div style={{flex:1,background:t.redBg,border:`1px solid ${t.redBrd}`,borderRadius:8,padding:"5px 8px",fontSize:11,color:t.red}}>{any}</div>
+            </div>
+          ))}
+        </div>}
+      </Panel>
+      <Code t={t} code={`// some — SwiftUI의 핵심
+var body: some View {
+    VStack {           // 실제: VStack<Text>
+        Text("Hello")  // 컴파일러만 구체 타입 앎
+    }
+    // ⚠ if문으로 다른 타입 반환 불가!
+}
+
+// any — 이종(heterogeneous) 컬렉션
+let shapes: [any Drawable] = [
+    Circle(),    // 다른 타입이지만
+    Square(),    // 같은 배열에 가능
+    Triangle()
+]
+
+// 실전 가이드:
+// ① 기본: some 사용 (빠름)
+// ② 다른 타입 섞어야 할 때만: any
+// ③ Swift 5.7+ 필수 키워드
+
+// Primary Associated Type (5.7+)
+let pub: some Publisher<Int, Never>
+// vs
+let pub: any Publisher<Int, Never>
+
+// any → some 변환 (언박싱)
+func draw(_ shape: some Drawable) { }
+// 제네릭과 동일:
+func draw<T: Drawable>(_ shape: T) { }`}/>
+    </Grid2>
+  </div>;
+}
+
+// 47. ADVANCED PATTERN MATCHING
+function PatternMatchDemo({t}) {
+  const [example,setExample]=useState(0);
+  const examples=[
+    {title:"튜플 매칭",code:`let point = (2, 0)
+switch point {
+case (0, 0):
+    print("원점")
+case (_, 0):
+    print("x축 위")  // ✅ 매칭!
+case (0, _):
+    print("y축 위")
+case (-2...2, -2...2):
+    print("중심 근처")
+default:
+    print("기타")
+}`},
+    {title:"where 절",code:`let age = 25
+switch age {
+case let x where x < 13:
+    print("어린이")
+case let x where x < 20:
+    print("청소년")
+case let x where x < 65:
+    print("성인")  // ✅ x=25
+default:
+    print("시니어")
+}
+
+// 배열에서도 where
+for name in names where name.hasPrefix("A") {
+    print(name)  // A로 시작하는 것만
+}`},
+    {title:"if case let",code:`// enum 부분 매칭
+enum Result {
+    case success(Int)
+    case failure(Error)
+}
+
+let result = Result.success(42)
+
+// switch 없이 한 case만 확인
+if case .success(let value) = result {
+    print(value)  // 42
+}
+
+// for 루프에서
+let results: [Result] = [...]
+for case .success(let v) in results {
+    print(v)  // 성공한 것만 순회
+}`},
+    {title:"Optional 패턴",code:`let names: [String?] = ["A", nil, "B", nil, "C"]
+
+// Optional 패턴 매칭
+for case let name? in names {
+    print(name)  // "A", "B", "C"
+}
+
+// 동등:
+for case .some(let name) in names {
+    print(name)
+}
+
+// switch에서
+let x: Int? = 42
+switch x {
+case .some(let val):
+    print(val)
+case .none:
+    print("nil")
+}`},
+    {title:"완전성 검사",code:`// exhaustive check — 컴파일러 보장
+enum Direction { case n, s, e, w }
+switch dir {
+case .n: ...
+case .s: ...
+case .e: ...
+case .w: ...
+// default 없어도 OK — 모든 case 처리
+}
+
+// @unknown default — 미래 case 대비
+switch dir {
+case .n: ...
+@unknown default:
+    // 새 case 추가 시 경고 발생!
+    break
+}`},
+  ];
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>패턴 매칭 유형</div>
+        <div style={{display:"flex",flexDirection:"column",gap:4}}>
+          {examples.map((ex,i)=>(
+            <div key={i} className="sb" onClick={()=>setExample(i)} style={{display:"flex",alignItems:"center",gap:8,background:example===i?t.purBg:t.sur2,border:`1.5px solid ${example===i?t.purBrd:t.bdr}`,borderRadius:10,padding:"8px 12px",cursor:"pointer"}}>
+              <span style={{color:example===i?t.pur:t.tx2,fontWeight:600,fontSize:13}}>{ex.title}</span>
+            </div>
+          ))}
+        </div>
+        <InfoBox t={t} color={t.pur} bg={t.purBg} brd={t.purBrd}>
+          Swift의 패턴 매칭은 단순 값 비교를 넘어 <b>구조 분해, 조건 필터링, 타입 검사</b>를 한 번에 수행합니다.
+        </InfoBox>
+      </Panel>
+      <Code t={t} code={examples[example].code}/>
+    </Grid2>
+  </div>;
+}
+
+// 48. RECURSIVE TYPES (indirect enum)
+function RecursiveTypeDemo({t}) {
+  const [mode,setMode]=useState("tree");
+  const tree={val:5,l:{val:3,l:{val:1,l:null,r:null},r:{val:4,l:null,r:null}},r:{val:8,l:{val:7,l:null,r:null},r:{val:9,l:null,r:null}}};
+  const TreeNode=({node,depth=0})=>{
+    if(!node)return null;
+    const colors=[t.blue,t.grn,t.pur,t.amb];
+    const c=colors[depth%colors.length];
+    return <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+      <div style={{background:`${c}15`,border:`2px solid ${c}`,borderRadius:"50%",width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"monospace",fontSize:14,fontWeight:700,color:c}}>{node.val}</div>
+      {(node.l||node.r)&&<div style={{display:"flex",gap:12}}><TreeNode node={node.l} depth={depth+1}/><TreeNode node={node.r} depth={depth+1}/></div>}
+    </div>;
+  };
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+      {[["tree","🌳 이진 트리",t.blue],["list","🔗 링크드 리스트",t.grn]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>setMode(m)} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>{mode==="tree"?"이진 탐색 트리":"링크드 리스트"}</div>
+        {mode==="tree"?<div style={{display:"flex",justifyContent:"center",padding:"10px 0"}}><TreeNode node={tree}/></div>
+        :<div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"center",flexWrap:"wrap",padding:"10px 0"}}>
+          {[1,2,3,4,5].map((v,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:4}}>
+              <div style={{background:t.grnBg,border:`1.5px solid ${t.grnBrd}`,borderRadius:8,padding:"6px 12px",fontFamily:"monospace",fontSize:14,fontWeight:700,color:t.grn}}>{v}</div>
+              {i<4&&<span style={{color:t.grn}}>→</span>}
+            </div>
+          ))}
+          <span style={{color:t.tx3,fontSize:12}}>nil</span>
+        </div>}
+        <InfoBox t={t} color={t.amb} bg={t.ambBg} brd={t.ambBrd}>
+          <b>indirect</b>가 필요한 이유: enum은 값 타입이라 크기가 컴파일 시 결정되어야 함. 자기 자신을 직접 포함하면 <b>무한 크기</b>가 됨. indirect = 힙에 간접 저장.
+        </InfoBox>
+      </Panel>
+      <Code t={t} code={mode==="tree"?`// indirect enum으로 이진 트리
+indirect enum BinaryTree<T> {
+    case empty
+    case node(T, left: BinaryTree, right: BinaryTree)
+}
+
+// 사용
+let tree: BinaryTree<Int> =
+    .node(5,
+        left: .node(3,
+            left: .node(1, left: .empty, right: .empty),
+            right: .node(4, left: .empty, right: .empty)
+        ),
+        right: .node(8,
+            left: .node(7, left: .empty, right: .empty),
+            right: .node(9, left: .empty, right: .empty)
+        )
+    )
+
+// 재귀 탐색
+func search(_ tree: BinaryTree<Int>, _ val: Int) -> Bool {
+    switch tree {
+    case .empty: return false
+    case .node(let v, let l, let r):
+        if val == v { return true }
+        return val < v ? search(l, val) : search(r, val)
+    }
+}`:`// indirect enum으로 링크드 리스트
+indirect enum LinkedList<T> {
+    case empty
+    case node(T, next: LinkedList)
+}
+
+let list: LinkedList<Int> =
+    .node(1, next:
+        .node(2, next:
+            .node(3, next:
+                .node(4, next:
+                    .node(5, next: .empty)
+                )
+            )
+        )
+    )
+
+// 재귀 순회
+func count<T>(_ list: LinkedList<T>) -> Int {
+    switch list {
+    case .empty: return 0
+    case .node(_, let next): return 1 + count(next)
+    }
+}
+
+// JSON 표현도 재귀 타입!
+indirect enum JSON {
+    case null, bool(Bool), number(Double)
+    case string(String)
+    case array([JSON])
+    case object([String: JSON])
+}`}/>
+    </Grid2>
+  </div>;
+}
+
+// 49. TYPE ERASURE
+function TypeErasureDemo({t}) {
+  const [step,setStep]=useState(0);
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>타입 소거가 필요한 이유</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div className={step>=0?"pi":""} style={{background:t.redBg,border:`1.5px solid ${t.redBrd}`,borderRadius:10,padding:10}}>
+            <div style={{fontWeight:600,fontSize:12,color:t.red}}>문제: 구체 타입이 노출됨</div>
+            <div style={{fontFamily:"monospace",fontSize:11,color:t.tx2,marginTop:4}}>Publishers.Map&lt;Publishers.Filter&lt;...&gt;&gt;</div>
+            <div style={{fontSize:10,color:t.tx3,marginTop:2}}>API에 이 복잡한 타입을 노출하면?</div>
+          </div>
+          {step>=1&&<div className="pi" style={{background:t.ambBg,border:`1.5px solid ${t.ambBrd}`,borderRadius:10,padding:10}}>
+            <div style={{fontWeight:600,fontSize:12,color:t.amb}}>해결 1: any Protocol</div>
+            <div style={{fontFamily:"monospace",fontSize:11,color:t.tx2,marginTop:4}}>any Publisher&lt;Int, Never&gt;</div>
+            <div style={{fontSize:10,color:t.tx3,marginTop:2}}>간단하지만 Existential 비용</div>
+          </div>}
+          {step>=2&&<div className="pi" style={{background:t.grnBg,border:`1.5px solid ${t.grnBrd}`,borderRadius:10,padding:10}}>
+            <div style={{fontWeight:600,fontSize:12,color:t.grn}}>해결 2: AnyPublisher (타입 소거)</div>
+            <div style={{fontFamily:"monospace",fontSize:11,color:t.tx2,marginTop:4}}>AnyPublisher&lt;Int, Never&gt;</div>
+            <div style={{fontSize:10,color:t.tx3,marginTop:2}}>구체 타입을 숨기고 통일된 인터페이스</div>
+          </div>}
+          {step>=3&&<div className="pi" style={{background:t.blueBg,border:`1.5px solid ${t.blueBrd}`,borderRadius:10,padding:10}}>
+            <div style={{fontWeight:600,fontSize:12,color:t.blue}}>해결 3: some (Swift 5.1+)</div>
+            <div style={{fontFamily:"monospace",fontSize:11,color:t.tx2,marginTop:4}}>some Publisher&lt;Int, Never&gt;</div>
+            <div style={{fontSize:10,color:t.tx3,marginTop:2}}>가장 효율적! Static Dispatch</div>
+          </div>}
+        </div>
+        <Btn t={t} color={t.blue} onClick={()=>setStep(s=>Math.min(s+1,3))} disabled={step>=3} full>다음 해결책 →</Btn>
+        {step>=3&&<Btn t={t} color={t.tx2} onClick={()=>setStep(0)}>↺ 리셋</Btn>}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// 문제: 구체 반환 타입이 너무 복잡
+func userPublisher() ->
+    Publishers.Map<
+        Publishers.Filter<
+            URLSession.DataTaskPublisher, ...
+        >, User
+    > { }  // 😱
+
+// 해결 1: AnyPublisher (타입 소거)
+func userPublisher() -> AnyPublisher<User, Error> {
+    URLSession.shared.dataTaskPublisher(for: url)
+        .filter { $0.response.statusCode == 200 }
+        .map { try JSONDecoder().decode(User.self, from: $0.data) }
+        .eraseToAnyPublisher()  // 구체 타입 숨김!
+}
+
+// 해결 2: some (더 나은 방법, 5.7+)
+func userPublisher() -> some Publisher<User, Error> {
+    // 컴파일러만 구체 타입 앎
+    // Static Dispatch → 성능 좋음
+}
+
+// 직접 만드는 타입 소거
+struct AnyAnimal {
+    private let _speak: () -> String
+    init<A: Animal>(_ animal: A) {
+        _speak = { animal.speak() }  // 클로저로 감쌈
+    }
+    func speak() -> String { _speak() }
+}`}/>
+        <InfoBox t={t} color={t.pur} bg={t.purBg} brd={t.purBrd}>
+          <b>타입 소거 vs some vs any</b>:<br/>
+          any = 런타임 다형성 (느림)<br/>
+          AnyXxx = 클로저로 타입 숨김 (중간)<br/>
+          some = 컴파일타임 고정 (가장 빠름)
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 50. SWIFT MACROS
+function MacrosDemo({t}) {
+  const [mode,setMode]=useState("freestanding");
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+      {[["freestanding","# Freestanding",t.blue],["attached","@ Attached",t.grn],["builtin","내장 매크로",t.pur]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>setMode(m)} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        {mode==="freestanding"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontWeight:600,fontSize:14}}>Freestanding Macro (#)</div>
+          <div style={{background:t.sur2,borderRadius:12,padding:14,border:`1.5px solid ${t.bdr}`}}>
+            <div style={{fontFamily:"monospace",fontSize:12,color:t.tx3}}>코드:</div>
+            <div style={{fontFamily:"monospace",fontSize:14,color:t.blue,fontWeight:600,marginTop:4}}>#stringify(a + b)</div>
+            <div style={{borderTop:`1px dashed ${t.bdr}`,margin:"8px 0"}}/>
+            <div style={{fontFamily:"monospace",fontSize:12,color:t.tx3}}>컴파일 시 확장:</div>
+            <div style={{fontFamily:"monospace",fontSize:14,color:t.grn,fontWeight:600,marginTop:4}}>(a + b, "a + b")</div>
+          </div>
+          <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>#은 <b>표현식/선언을 생성</b>하는 매크로. 컴파일 타임에 코드가 확장됩니다.</InfoBox>
+        </div>}
+        {mode==="attached"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontWeight:600,fontSize:14}}>Attached Macro (@)</div>
+          <div style={{background:t.sur2,borderRadius:12,padding:14,border:`1.5px solid ${t.bdr}`}}>
+            <div style={{fontFamily:"monospace",fontSize:12,color:t.tx3}}>코드:</div>
+            <div style={{fontFamily:"monospace",fontSize:14,color:t.grn,fontWeight:600,marginTop:4}}>@Observable class Model {"{"}</div>
+            <div style={{fontFamily:"monospace",fontSize:14,color:t.tx,marginLeft:16}}>var name = ""</div>
+            <div style={{fontFamily:"monospace",fontSize:14,color:t.grn,fontWeight:600}}>{"}"}</div>
+            <div style={{borderTop:`1px dashed ${t.bdr}`,margin:"8px 0"}}/>
+            <div style={{fontFamily:"monospace",fontSize:12,color:t.tx3}}>확장 후: get/set에 추적 코드 자동 삽입</div>
+          </div>
+          <InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>@는 <b>기존 선언에 코드를 추가</b>. @Observable, @Model(SwiftData) 등이 매크로.</InfoBox>
+        </div>}
+        {mode==="builtin"&&<div style={{display:"flex",flexDirection:"column",gap:6}}>
+          <div style={{fontWeight:600,fontSize:14}}>Swift 내장 매크로들</div>
+          {[["#Preview","SwiftUI 프리뷰 생성",t.blue],
+            ["@Observable","프로퍼티 변경 자동 추적 (iOS 17+)",t.grn],
+            ["@Model","SwiftData 모델 정의",t.pur],
+            ["#stringify","표현식 → (값, 문자열) 변환",t.amb],
+            ["@Entry","EnvironmentValues에 키 추가",t.cya],
+          ].map(([name,desc,c],i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:8,background:`${c}15`,border:`1px solid ${c}40`,borderRadius:8,padding:"6px 10px"}}>
+              <div style={{fontFamily:"monospace",fontSize:12,fontWeight:700,color:c,minWidth:100}}>{name}</div>
+              <div style={{fontSize:11,color:t.tx2}}>{desc}</div>
+            </div>
+          ))}
+        </div>}
+      </Panel>
+      <Code t={t} code={`// Swift 5.9 Macros (WWDC 2023)
+// 컴파일 타임에 코드를 생성하는 플러그인
+
+// Freestanding Expression Macro
+@freestanding(expression)
+macro stringify<T>(_ value: T) -> (T, String)
+
+let result = #stringify(2 + 3)
+// 확장 → (2 + 3, "2 + 3")
+
+// Attached Macro — @Observable
+@Observable  // 매크로!
+class UserModel {
+    var name = ""  // get/set에 추적 코드 삽입
+    var age = 0
+}
+// 확장 후: _name, _age 백킹 저장소 생성
+// access(keyPath:) / withMutation(keyPath:)
+
+// 매크로 vs 프로퍼티 래퍼
+// @propertyWrapper: 런타임 코드
+// @Macro: 컴파일 타임 코드 생성
+// → 매크로가 더 유연하고 강력
+
+// ⚠ 매크로 확장 보기:
+// Xcode → 우클릭 → Expand Macro`}/>
+    </Grid2>
+  </div>;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  APP
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2881,6 +4542,25 @@ function App() {
       case "overflow":return <OverflowDemo {...p}/>;
       case "floatpoint":return <FloatPointDemo {...p}/>;
       case "unicode":return <UnicodeDemo {...p}/>;
+      case "virtualmem":return <VirtualMemDemo {...p}/>;
+      case "pointer":return <PointerDemo {...p}/>;
+      case "procthread":return <ProcThreadDemo {...p}/>;
+      case "syncprim":return <SyncPrimDemo {...p}/>;
+      case "cache":return <CacheDemo {...p}/>;
+      case "compile":return <CompileDemo {...p}/>;
+      case "syscall":return <SyscallDemo {...p}/>;
+      case "endian":return <EndianDemo {...p}/>;
+      case "typeinfer":return <TypeInferDemo {...p}/>;
+      case "valuesem":return <ValueSemDemo {...p}/>;
+      case "higherorder":return <HigherOrderDemo {...p}/>;
+      case "lazyeval":return <LazyEvalDemo {...p}/>;
+      case "dispatch":return <DispatchDemo {...p}/>;
+      case "variance":return <VarianceDemo {...p}/>;
+      case "somany":return <SomAnyDemo {...p}/>;
+      case "patternmatch":return <PatternMatchDemo {...p}/>;
+      case "recursivetype":return <RecursiveTypeDemo {...p}/>;
+      case "typeerasure":return <TypeErasureDemo {...p}/>;
+      case "macros":return <MacrosDemo {...p}/>;
     }
   };
   // Group concepts
