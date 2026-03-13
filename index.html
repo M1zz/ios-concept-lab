@@ -70,7 +70,7 @@ const DK = {
 const STRINGS = {
 ko:{
   appTitle:"iOS 개념 시각화 LAB",
-  appSub:"25가지 핵심 개념 · 눈으로 보고 손으로 느끼기",
+  appSub:"31가지 핵심 개념 · 눈으로 보고 손으로 느끼기",
   dark:"다크",light:"라이트",langSwitch:"EN",
   concepts:{
     callby:{label:"Call by Value / Ref",sub:"복사 vs 공유"},
@@ -98,20 +98,27 @@ ko:{
     escaping:{label:"@escaping Closure",sub:"탈출 vs 비탈출"},
     propwrap:{label:"Property Wrappers",sub:"@propertyWrapper 원리"},
     responder:{label:"Responder Chain",sub:"이벤트 전달 체인"},
+    stackheap:{label:"Stack vs Heap",sub:"데이터가 어디에 저장되는가"},
+    retaincycle:{label:"순환 참조 & weak/unowned",sub:"메모리 누수의 원인과 해결"},
+    instruments:{label:"Instruments 디버깅",sub:"메모리 누수 찾고 고치기"},
+    overflow:{label:"Integer Overflow",sub:"정수 표현과 오버플로우"},
+    floatpoint:{label:"부동소수점 함정",sub:"0.1 + 0.2 ≠ 0.3"},
+    unicode:{label:"Unicode & String",sub:"이모지 글자 수의 비밀"},
   },
   groups:[
     {label:"Swift 기초",ids:["callby","optional","closure","enum","generics","access"]},
     {label:"상태 & 데이터",ids:["truth","state","propwrap","codable"]},
     {label:"동시성",ids:["thread","async","gcd","actor"]},
-    {label:"메모리",ids:["arc","cow"]},
+    {label:"메모리",ids:["arc","cow","stackheap","retaincycle","instruments"]},
     {label:"에러 & 클로저",ids:["errorh","escaping"]},
     {label:"패턴 & 구조",ids:["delegate","lifecycle","arch","notif","protocol"]},
     {label:"앱 & UIKit",ids:["applife","responder"]},
+    {label:"숫자 & 문자",ids:["overflow","floatpoint","unicode"]},
   ],
 },
 en:{
   appTitle:"iOS Concept Visualization LAB",
-  appSub:"25 core concepts · See it, feel it interactively",
+  appSub:"31 core concepts · See it, feel it interactively",
   dark:"Dark",light:"Light",langSwitch:"KO",
   concepts:{
     callby:{label:"Call by Value / Ref",sub:"Copy vs Share"},
@@ -139,15 +146,22 @@ en:{
     escaping:{label:"@escaping Closure",sub:"Escaping vs non-escaping"},
     propwrap:{label:"Property Wrappers",sub:"@propertyWrapper principle"},
     responder:{label:"Responder Chain",sub:"Event propagation chain"},
+    stackheap:{label:"Stack vs Heap",sub:"Where data lives"},
+    retaincycle:{label:"Retain Cycle & weak/unowned",sub:"Cause and fix of memory leaks"},
+    instruments:{label:"Instruments Debugging",sub:"Find and fix memory leaks"},
+    overflow:{label:"Integer Overflow",sub:"Integer representation & overflow"},
+    floatpoint:{label:"Floating Point Trap",sub:"0.1 + 0.2 ≠ 0.3"},
+    unicode:{label:"Unicode & String",sub:"The secret of emoji character count"},
   },
   groups:[
     {label:"Swift Basics",ids:["callby","optional","closure","enum","generics","access"]},
     {label:"State & Data",ids:["truth","state","propwrap","codable"]},
     {label:"Concurrency",ids:["thread","async","gcd","actor"]},
-    {label:"Memory",ids:["arc","cow"]},
+    {label:"Memory",ids:["arc","cow","stackheap","retaincycle","instruments"]},
     {label:"Error & Closures",ids:["errorh","escaping"]},
     {label:"Patterns & Architecture",ids:["delegate","lifecycle","arch","notif","protocol"]},
     {label:"App & UIKit",ids:["applife","responder"]},
+    {label:"Numbers & Strings",ids:["overflow","floatpoint","unicode"]},
   ],
 },
 };
@@ -177,6 +191,12 @@ const CONCEPTS = [
   {id:"escaping", emoji:"🏃", label:"@escaping Closure",        sub:"탈출 vs 비탈출"},
   {id:"propwrap", emoji:"🎁", label:"Property Wrappers",        sub:"@propertyWrapper 원리"},
   {id:"responder",emoji:"👆", label:"Responder Chain",           sub:"이벤트 전달 체인"},
+  {id:"stackheap",emoji:"🏗️", label:"Stack vs Heap",             sub:"데이터가 어디에 저장되는가"},
+  {id:"retaincycle",emoji:"💀", label:"순환 참조 & weak/unowned",  sub:"메모리 누수의 원인과 해결"},
+  {id:"instruments",emoji:"🔬", label:"Instruments 디버깅",        sub:"메모리 누수 찾고 고치기"},
+  {id:"overflow",emoji:"💥", label:"Integer Overflow",            sub:"정수 표현과 오버플로우"},
+  {id:"floatpoint",emoji:"🎯", label:"부동소수점 함정",            sub:"0.1 + 0.2 ≠ 0.3"},
+  {id:"unicode",emoji:"🔤", label:"Unicode & String",             sub:"이모지 글자 수의 비밀"},
 ];
 
 // ── GLOBAL CSS ────────────────────────────────────────────────────────────────
@@ -2154,6 +2174,668 @@ textField.resignFirstResponder()
   </div>;
 }
 
+// 26. STACK vs HEAP
+function StackHeapDemo({t}) {
+  const [items,setItems]=useState([]);
+  const [heapItems,setHeapItems]=useState([]);
+  const [sid,setSid]=useState(1);
+  const [hid,setHid]=useState(1);
+  const pushStack=()=>{setItems(p=>[...p,{id:sid,label:`frame_${sid}`,size:Math.floor(Math.random()*40+20)}]);setSid(i=>i+1)};
+  const popStack=()=>setItems(p=>p.slice(0,-1));
+  const allocHeap=()=>{setHeapItems(p=>[...p,{id:hid,label:`Object_${hid}`,rc:1}]);setHid(i=>i+1)};
+  const freeHeap=(id)=>setHeapItems(p=>p.filter(x=>x.id!==id));
+  const reset=()=>{setItems([]);setHeapItems([]);setSid(1);setHid(1)};
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>📚 Stack 영역</div>
+        <div style={{color:t.tx3,fontSize:11,marginBottom:6}}>LIFO · 자동 할당/해제 · struct, Int, Bool</div>
+        <div style={{display:"flex",flexDirection:"column-reverse",gap:4,minHeight:120,background:t.sur2,borderRadius:12,padding:10,border:`1.5px solid ${t.blueBrd}`}}>
+          {items.length===0&&<div style={{color:t.tx3,fontSize:12,textAlign:"center",padding:20}}>비어있음 — Push를 눌러보세요</div>}
+          {items.map((it,i)=>(
+            <div key={it.id} className="pi" style={{background:t.blueBg,border:`1.5px solid ${t.blueBrd}`,borderRadius:8,padding:"8px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontFamily:"monospace",fontSize:12,color:t.blue,fontWeight:600}}>{it.label}</span>
+              <span style={{fontFamily:"monospace",fontSize:10,color:t.tx3}}>{it.size}B</span>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <Btn t={t} color={t.blue} onClick={pushStack}>↓ Push (함수 호출)</Btn>
+          <Btn t={t} color={t.amb} onClick={popStack} disabled={items.length===0}>↑ Pop (함수 반환)</Btn>
+        </div>
+      </Panel>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>🗄 Heap 영역</div>
+        <div style={{color:t.tx3,fontSize:11,marginBottom:6}}>동적 할당 · ARC 관리 · class 인스턴스</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,minHeight:120,background:t.sur2,borderRadius:12,padding:10,border:`1.5px solid ${t.grnBrd}`}}>
+          {heapItems.length===0&&<div style={{color:t.tx3,fontSize:12,textAlign:"center",padding:20,width:"100%"}}>비어있음 — Alloc을 눌러보세요</div>}
+          {heapItems.map(it=>(
+            <div key={it.id} className="pi" style={{background:t.grnBg,border:`1.5px solid ${t.grnBrd}`,borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:4,minWidth:90}}>
+              <span style={{fontFamily:"monospace",fontSize:11,color:t.grn,fontWeight:600}}>{it.label}</span>
+              <button className="sb" onClick={()=>freeHeap(it.id)} style={{background:t.redBg,color:t.red,border:`1px solid ${t.redBrd}`,borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:600,cursor:"pointer"}}>free (RC=0)</button>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <Btn t={t} color={t.grn} onClick={allocHeap}>+ Alloc (객체 생성)</Btn>
+          <Btn t={t} color={t.tx2} onClick={reset}>↺ 초기화</Btn>
+        </div>
+      </Panel>
+    </Grid2>
+    <Grid2 t={t}>
+      <Code t={t} code={`// struct → Stack에 저장 (빠름)
+struct Point {
+    var x: Double  // 값이 Stack에 직접 저장
+    var y: Double
+}
+
+func draw() {
+    let p = Point(x: 1, y: 2)  // Stack push
+    print(p)
+}  // 함수 종료 → 자동 해제 (Stack pop)
+
+// class → Heap에 저장 (ARC 관리)
+class ViewModel {
+    var name: String = ""
+}
+
+func setup() {
+    let vm = ViewModel()  // Heap alloc + RC=1
+    // Stack에는 vm 포인터만 저장
+}  // RC=0 → Heap에서 해제`}/>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>
+          <b>Stack</b>: LIFO 구조, 함수 호출 시 할당, 반환 시 해제.<br/>
+          매우 빠르지만 크기가 제한적 (보통 1MB).
+        </InfoBox>
+        <InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>
+          <b>Heap</b>: 동적 할당, ARC가 관리, 크기 유연.<br/>
+          할당/해제가 느리고 단편화(fragmentation) 발생 가능.
+        </InfoBox>
+        <InfoBox t={t} color={t.pur} bg={t.purBg} brd={t.purBrd}>
+          <b>Escape 분석</b>: 컴파일러가 class 인스턴스도 Stack에<br/>
+          할당할 수 있는지 분석 → Heap 할당 최소화 최적화.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 27. RETAIN CYCLE & WEAK/UNOWNED
+function RetainCycleDemo({t}) {
+  const [mode,setMode]=useState("cycle");
+  const [step,setStep]=useState(0);
+  const [aRC,setARC]=useState(0);
+  const [bRC,setBRC]=useState(0);
+  const reset=()=>{setStep(0);setARC(0);setBRC(0)};
+  const runCycle=()=>{
+    setStep(1);setARC(1);setBRC(1);
+    setTimeout(()=>{setStep(2);setARC(2);setBRC(2)},600);
+    setTimeout(()=>setStep(3),1200);
+  };
+  const runWeak=()=>{
+    setStep(1);setARC(1);setBRC(1);
+    setTimeout(()=>{setStep(2);setARC(1);setBRC(2)},600);
+    setTimeout(()=>{setStep(3);setARC(0);setBRC(1)},1200);
+    setTimeout(()=>{setStep(4);setBRC(0)},1800);
+  };
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+      {[["cycle","💀 순환 참조",t.red],["weak","✅ weak 해결",t.grn],["compare","🔍 weak vs unowned",t.pur]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>{setMode(m);reset()}} style={{opacity:mode===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        {mode==="cycle"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>강한 참조 순환</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:30,minHeight:140}}>
+            <div className={step>=1?"pi":""} style={{background:step>=3?t.redBg:t.sur2,border:`2px solid ${step>=3?t.red:t.bdr}`,borderRadius:14,padding:"16px 20px",textAlign:"center",transition:"all .5s"}}>
+              <div style={{fontSize:28}}>🏠</div>
+              <div style={{fontFamily:"monospace",fontSize:12,fontWeight:600,marginTop:4}}>Person</div>
+              <div style={{fontFamily:"monospace",fontSize:11,color:step>=1?t.blue:t.tx3}}>RC: {aRC}</div>
+            </div>
+            {step>=2&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+              <span className="pi" style={{color:t.red,fontSize:11,fontFamily:"monospace"}}>strong →</span>
+              <span className="pi" style={{color:t.red,fontSize:11,fontFamily:"monospace"}}>← strong</span>
+            </div>}
+            <div className={step>=1?"pi":""} style={{background:step>=3?t.redBg:t.sur2,border:`2px solid ${step>=3?t.red:t.bdr}`,borderRadius:14,padding:"16px 20px",textAlign:"center",transition:"all .5s"}}>
+              <div style={{fontSize:28}}>🏢</div>
+              <div style={{fontFamily:"monospace",fontSize:12,fontWeight:600,marginTop:4}}>Apartment</div>
+              <div style={{fontFamily:"monospace",fontSize:11,color:step>=1?t.blue:t.tx3}}>RC: {bRC}</div>
+            </div>
+          </div>
+          {step===0&&<Btn t={t} color={t.red} onClick={runCycle} full>순환 참조 시뮬레이션</Btn>}
+          {step>=1&&step<3&&<div style={{color:t.tx2,fontSize:12,textAlign:"center"}}>참조 연결 중...</div>}
+          {step>=3&&<><div className="pi sk" style={{background:t.redBg,border:`1px solid ${t.redBrd}`,borderRadius:11,padding:12,color:t.red,fontSize:13,textAlign:"center"}}>💀 변수를 nil로 해도 RC≥1 → 영원히 메모리에 남음!</div><Btn t={t} color={t.tx2} onClick={reset}>↺ 리셋</Btn></>}
+        </div>}
+        {mode==="weak"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>weak로 순환 끊기</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:30,minHeight:140}}>
+            <div className={step>=1?"pi":""} style={{background:step>=3?(step>=4?t.grnBg:t.ambBg):t.sur2,border:`2px solid ${step>=3?(step>=4?t.grn:t.amb):t.bdr}`,borderRadius:14,padding:"16px 20px",textAlign:"center",transition:"all .5s",opacity:step>=3?.5:1}}>
+              <div style={{fontSize:28}}>🏠</div>
+              <div style={{fontFamily:"monospace",fontSize:12,fontWeight:600,marginTop:4}}>Person</div>
+              <div style={{fontFamily:"monospace",fontSize:11,color:step>=1?t.blue:t.tx3}}>RC: {aRC}</div>
+            </div>
+            {step>=2&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+              <span className="pi" style={{color:t.grn,fontSize:11,fontFamily:"monospace"}}>strong →</span>
+              <span className="pi" style={{color:t.amb,fontSize:11,fontFamily:"monospace"}}>← weak</span>
+            </div>}
+            <div className={step>=1?"pi":""} style={{background:step>=4?t.grnBg:t.sur2,border:`2px solid ${step>=4?t.grn:t.bdr}`,borderRadius:14,padding:"16px 20px",textAlign:"center",transition:"all .5s",opacity:step>=4?.5:1}}>
+              <div style={{fontSize:28}}>🏢</div>
+              <div style={{fontFamily:"monospace",fontSize:12,fontWeight:600,marginTop:4}}>Apartment</div>
+              <div style={{fontFamily:"monospace",fontSize:11,color:step>=1?t.blue:t.tx3}}>RC: {bRC}</div>
+            </div>
+          </div>
+          {step===0&&<Btn t={t} color={t.grn} onClick={runWeak} full>weak 참조 시뮬레이션</Btn>}
+          {step>=3&&step<4&&<div className="pi" style={{background:t.ambBg,border:`1px solid ${t.ambBrd}`,borderRadius:11,padding:10,color:t.amb,fontSize:12,textAlign:"center"}}>Person nil → weak이므로 RC 안 올림 → RC=0 해제!</div>}
+          {step>=4&&<><div className="pi" style={{background:t.grnBg,border:`1px solid ${t.grnBrd}`,borderRadius:11,padding:10,color:t.grn,fontSize:12,textAlign:"center"}}>✅ 둘 다 정상 해제! 메모리 누수 없음!</div><Btn t={t} color={t.tx2} onClick={reset}>↺ 리셋</Btn></>}
+        </div>}
+        {mode==="compare"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{fontWeight:600,fontSize:14}}>weak vs unowned 비교</div>
+          <div style={{display:"flex",gap:10}}>
+            <div style={{flex:1,background:t.blueBg,border:`1.5px solid ${t.blueBrd}`,borderRadius:12,padding:14}}>
+              <div style={{color:t.blue,fontWeight:700,fontSize:14,marginBottom:8}}>weak</div>
+              <div style={{color:t.tx2,fontSize:12,lineHeight:1.7}}>
+                • Optional (nil 가능)<br/>
+                • 참조 대상이 해제되면 <b style={{color:t.blue}}>자동 nil</b><br/>
+                • 약간의 오버헤드<br/>
+                • <b>안전함</b> — 크래시 안 남
+              </div>
+              <div style={{marginTop:10,background:t.sur2,borderRadius:8,padding:8}}>
+                <div style={{fontFamily:"monospace",fontSize:11,color:t.tx2}}>weak var delegate: P?</div>
+                <div style={{fontFamily:"monospace",fontSize:11,color:t.tx2}}>// 해제 후 → nil</div>
+              </div>
+            </div>
+            <div style={{flex:1,background:t.purBg,border:`1.5px solid ${t.purBrd}`,borderRadius:12,padding:14}}>
+              <div style={{color:t.pur,fontWeight:700,fontSize:14,marginBottom:8}}>unowned</div>
+              <div style={{color:t.tx2,fontSize:12,lineHeight:1.7}}>
+                • Non-optional<br/>
+                • 참조 대상이 해제되면 <b style={{color:t.red}}>크래시!</b><br/>
+                • 오버헤드 없음<br/>
+                • <b>수명이 같거나 길 때</b>만 사용
+              </div>
+              <div style={{marginTop:10,background:t.sur2,borderRadius:8,padding:8}}>
+                <div style={{fontFamily:"monospace",fontSize:11,color:t.tx2}}>unowned let owner: P</div>
+                <div style={{fontFamily:"monospace",fontSize:11,color:t.tx2}}>// 해제 후 접근 → 💥</div>
+              </div>
+            </div>
+          </div>
+          <InfoBox t={t} color={t.amb} bg={t.ambBg} brd={t.ambBrd}>
+            <b>선택 기준</b>: 확신 없으면 <b>weak</b>. 수명이 동일하거나 항상 존재하는 게 확실할 때만 unowned.
+          </InfoBox>
+        </div>}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={mode==="cycle"?`// 강한 참조 순환 예시
+class Person {
+    var name: String
+    var apartment: Apartment?  // strong!
+    deinit { print("Person 해제") }
+}
+
+class Apartment {
+    var unit: String
+    var tenant: Person?        // strong!
+    deinit { print("Apartment 해제") }
+}
+
+var john: Person? = Person(name: "John")
+var apt: Apartment? = Apartment(unit: "5A")
+john?.apartment = apt  // 서로 참조
+apt?.tenant = john     // 순환 발생!
+
+john = nil  // deinit 안 불림! 💀
+apt = nil   // deinit 안 불림! 💀`:mode==="weak"?`// weak로 순환 참조 해결
+class Person {
+    var name: String
+    var apartment: Apartment?
+    deinit { print("Person 해제") }
+}
+
+class Apartment {
+    var unit: String
+    weak var tenant: Person?  // ← weak!
+    deinit { print("Apartment 해제") }
+}
+
+// Person → Apartment: strong
+// Apartment → Person: weak (RC 안 올림)
+john = nil
+// → Person RC=0 → deinit ✅
+// → Apartment RC=0 → deinit ✅
+
+// Delegate 패턴에서도 필수!
+protocol ViewDelegate: AnyObject {}
+class MyView {
+    weak var delegate: ViewDelegate?
+}`:`// [weak self] — 클로저에서 필수
+class ViewModel {
+    var name = "Leeo"
+
+    func startTimer() {
+        // ❌ 순환 참조!
+        Timer.scheduledTimer(withTimeInterval: 1) {
+            _ in print(self.name)
+        }
+
+        // ✅ weak self로 해결
+        Timer.scheduledTimer(withTimeInterval: 1) {
+            [weak self] _ in
+            guard let self else { return }
+            print(self.name)
+        }
+    }
+}
+
+// unowned — 수명이 같을 때
+class Customer {
+    let card: CreditCard
+    init() {
+        card = CreditCard(owner: self)
+    }
+}
+class CreditCard {
+    unowned let owner: Customer
+    // Customer 없는 카드는 없으므로 안전
+}`}/>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 28. INSTRUMENTS
+function InstrumentsDemo({t}) {
+  const [tool,setTool]=useState("leaks");
+  const [objects,setObjects]=useState([
+    {id:1,name:"ViewController",leaked:true,rc:2,refs:["Closure"]},
+    {id:2,name:"Closure",leaked:true,rc:1,refs:["ViewController"]},
+    {id:3,name:"NetworkManager",leaked:false,rc:1,refs:[]},
+    {id:4,name:"ImageCache",leaked:false,rc:3,refs:[]},
+  ]);
+  const [fixed,setFixed]=useState(false);
+  const [allocData]=useState([10,12,15,18,22,28,35,44,55,68,84,102,95,88,82,78]);
+  const fixLeak=()=>{setFixed(true);setObjects(o=>o.map(x=>({...x,leaked:false,rc:x.leaked?0:x.rc})))};
+  const resetDemo=()=>{setFixed(false);setObjects([
+    {id:1,name:"ViewController",leaked:true,rc:2,refs:["Closure"]},
+    {id:2,name:"Closure",leaked:true,rc:1,refs:["ViewController"]},
+    {id:3,name:"NetworkManager",leaked:false,rc:1,refs:[]},
+    {id:4,name:"ImageCache",leaked:false,rc:3,refs:[]},
+  ])};
+  const maxAlloc=Math.max(...allocData);
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+      {[["leaks","🔴 Leaks",t.red],["alloc","📊 Allocations",t.blue],["graph","🕸 Memory Graph",t.pur]].map(([m,l,c])=>(
+        <Btn key={m} t={t} color={c} onClick={()=>setTool(m)} style={{opacity:tool===m?1:.38}}>{l}</Btn>
+      ))}
+    </div>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        {tool==="leaks"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontWeight:600,fontSize:14}}>🔴 Leaks — 누수된 객체 탐지</div>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            {objects.map(obj=>(
+              <div key={obj.id} className={obj.leaked&&!fixed?"pu":fixed&&obj.rc===0?"pi":""} style={{display:"flex",alignItems:"center",gap:10,background:obj.leaked&&!fixed?t.redBg:obj.rc===0?t.grnBg:t.sur2,border:`1.5px solid ${obj.leaked&&!fixed?t.redBrd:obj.rc===0?t.grnBrd:t.bdr}`,borderRadius:10,padding:"8px 12px",transition:"all .5s"}}>
+                <span style={{fontSize:16}}>{obj.leaked&&!fixed?"🔴":obj.rc===0?"✅":"⚪"}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontFamily:"monospace",fontSize:12,fontWeight:600,color:obj.leaked&&!fixed?t.red:t.tx}}>{obj.name}</div>
+                  <div style={{fontFamily:"monospace",fontSize:10,color:t.tx3}}>RC: {obj.rc}{obj.leaked&&!fixed?" — LEAKED":obj.rc===0?" — FREED":""}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {!fixed?<Btn t={t} color={t.grn} onClick={fixLeak} full>🔧 [weak self] 적용하여 수정</Btn>:<><InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>✅ 순환 참조 해결! 누수된 객체가 정상 해제됨.</InfoBox><Btn t={t} color={t.tx2} onClick={resetDemo}>↺ 리셋</Btn></>}
+        </div>}
+        {tool==="alloc"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontWeight:600,fontSize:14}}>📊 Allocations — 메모리 사용량 추이</div>
+          <div style={{background:t.sur2,borderRadius:12,padding:14,border:`1.5px solid ${t.bdr}`}}>
+            <div style={{display:"flex",alignItems:"flex-end",gap:3,height:120}}>
+              {allocData.map((v,i)=>(
+                <div key={i} style={{flex:1,background:i<11?`linear-gradient(to top,${t.blue},${t.red})`:t.grn,height:`${(v/maxAlloc)*100}%`,borderRadius:"4px 4px 0 0",transition:"all .3s",opacity:0.8}}/>
+              ))}
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",marginTop:6}}>
+              <span style={{fontSize:10,color:t.tx3}}>0s</span>
+              <span style={{fontSize:10,color:t.red}}>↑ 누수 구간</span>
+              <span style={{fontSize:10,color:t.grn}}>↓ 수정 후</span>
+              <span style={{fontSize:10,color:t.tx3}}>16s</span>
+            </div>
+          </div>
+          <InfoBox t={t} color={t.amb} bg={t.ambBg} brd={t.ambBrd}>
+            메모리가 계속 올라가면 누수 의심! 화면 전환 후 떨어지지 않으면 확인 필요.
+          </InfoBox>
+        </div>}
+        {tool==="graph"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontWeight:600,fontSize:14}}>🕸 Memory Graph — 참조 관계 시각화</div>
+          <div style={{background:t.sur2,borderRadius:12,padding:16,border:`1.5px solid ${t.bdr}`,minHeight:160}}>
+            <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:20,flexWrap:"wrap"}}>
+              <div style={{background:t.redBg,border:`2px solid ${t.red}`,borderRadius:12,padding:"12px 16px",textAlign:"center"}}>
+                <div style={{fontFamily:"monospace",fontSize:12,fontWeight:600,color:t.red}}>ViewController</div>
+                <div style={{fontSize:10,color:t.tx3}}>RC: 2</div>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:2,color:t.red}}>
+                <span style={{fontSize:11}}>strong →</span>
+                <span style={{fontSize:11}}>← strong</span>
+              </div>
+              <div style={{background:t.redBg,border:`2px solid ${t.red}`,borderRadius:12,padding:"12px 16px",textAlign:"center"}}>
+                <div style={{fontFamily:"monospace",fontSize:12,fontWeight:600,color:t.red}}>Closure</div>
+                <div style={{fontSize:10,color:t.tx3}}>RC: 1</div>
+              </div>
+            </div>
+            <div style={{display:"flex",justifyContent:"center",marginTop:16,gap:20}}>
+              <div style={{background:t.sur,border:`1.5px solid ${t.bdr}`,borderRadius:10,padding:"10px 14px",textAlign:"center"}}>
+                <div style={{fontFamily:"monospace",fontSize:11,color:t.tx2}}>NetworkManager</div>
+                <div style={{fontSize:10,color:t.grn}}>RC: 1 ✅</div>
+              </div>
+              <div style={{background:t.sur,border:`1.5px solid ${t.bdr}`,borderRadius:10,padding:"10px 14px",textAlign:"center"}}>
+                <div style={{fontFamily:"monospace",fontSize:11,color:t.tx2}}>ImageCache</div>
+                <div style={{fontSize:10,color:t.grn}}>RC: 3 ✅</div>
+              </div>
+            </div>
+          </div>
+          <InfoBox t={t} color={t.pur} bg={t.purBg} brd={t.purBrd}>
+            Xcode → Debug Memory Graph로 실시간 참조 관계를 시각적으로 확인. 보라색 느낌표(!)가 누수 표시.
+          </InfoBox>
+        </div>}
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={tool==="leaks"?`// Instruments → Leaks 사용법
+// 1. Xcode → Product → Profile (⌘I)
+// 2. Leaks 템플릿 선택
+// 3. Record 시작 → 앱 조작
+
+// 누수 발견 시 확인할 것:
+// ① 순환 참조 (가장 흔함)
+class VC: UIViewController {
+    var closure: (() -> Void)?
+
+    override func viewDidLoad() {
+        // ❌ self를 강하게 캡처
+        closure = { print(self.title) }
+
+        // ✅ [weak self] 사용
+        closure = { [weak self] in
+            print(self?.title ?? "")
+        }
+    }
+}`:tool==="alloc"?`// Instruments → Allocations 사용법
+// 시간에 따른 메모리 할당량 추적
+
+// 확인 포인트:
+// ① 메모리가 지속적으로 증가하는가?
+// ② 화면 전환 후 메모리가 줄어드는가?
+// ③ Mark Generation으로 구간별 비교
+
+// 메모리 경고 대응
+override func didReceiveMemoryWarning() {
+    super.didReceiveMemoryWarning()
+    imageCache.removeAll()
+    // 불필요한 캐시 정리
+}
+
+// 실전 팁
+// • Generation A → B 사이 새로 생긴
+//   객체 중 해제 안 된 것 = 의심 대상
+// • Persistent 열에서 숫자가 큰 것 확인`:`// Xcode Memory Graph Debugger
+// Debug → Debug Workflow → View Memory Graph
+// 또는 디버그 바에서 🔳 아이콘 클릭
+
+// 확인할 수 있는 것:
+// ① 현재 살아있는 모든 객체
+// ② 객체 간 참조 관계 (화살표)
+// ③ 보라색 ! = 누수 의심 객체
+
+// Memory Graph로 발견 → 코드에서 수정
+// 1. 누수 객체 클릭
+// 2. 참조 경로 확인 (Backtrace)
+// 3. 순환 참조 지점 찾기
+// 4. weak/unowned로 수정`}/>
+        <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>
+          <b>디버깅 순서</b>: Memory Graph로 발견 → Leaks로 확인 → Allocations로 추이 파악 → 코드 수정.
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
+// 29. INTEGER OVERFLOW
+function OverflowDemo({t}) {
+  const [val,setVal]=useState(120);
+  const [bits,setBits]=useState("01111000");
+  const [overflow,setOverflow]=useState(false);
+  const updateVal=(v)=>{
+    const clamped=Math.max(-128,Math.min(127,v));
+    if(v>127||v<-128){setOverflow(true);setTimeout(()=>setOverflow(false),1500)}
+    setVal(clamped);
+    // 2's complement 8-bit
+    let binary=clamped>=0?clamped:256+clamped;
+    setBits(binary.toString(2).padStart(8,"0"));
+  };
+  const [wrapVal,setWrapVal]=useState(127);
+  const wrapAdd=()=>{const n=((wrapVal+1+128)%256)-128;setWrapVal(n)};
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>Int8 범위: -128 ~ 127</div>
+        <div style={{display:"flex",justifyContent:"center",gap:4,marginTop:8}}>
+          {bits.split("").map((b,i)=>(
+            <div key={i} style={{width:36,height:44,display:"flex",alignItems:"center",justifyContent:"center",background:i===0?t.redBg:b==="1"?t.blueBg:t.sur2,border:`2px solid ${i===0?t.redBrd:b==="1"?t.blueBrd:t.bdr}`,borderRadius:8,fontFamily:"monospace",fontSize:18,fontWeight:700,color:i===0?(val<0?t.red:t.tx3):b==="1"?t.blue:t.tx3,transition:"all .3s"}}>
+              {b}
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:4,padding:"0 4px"}}>
+          <span style={{fontSize:10,color:t.red,fontFamily:"monospace"}}>부호 비트</span>
+          <span style={{fontSize:10,color:t.tx3,fontFamily:"monospace"}}>값 비트 (7비트)</span>
+        </div>
+        <div style={{textAlign:"center",marginTop:12}}>
+          <span style={{fontFamily:"monospace",fontSize:28,fontWeight:700,color:overflow?t.red:t.blue,transition:"all .3s"}}>{val}</span>
+          {overflow&&<div className="pi sk" style={{color:t.red,fontSize:12,marginTop:4}}>⚠️ Overflow! Swift에서는 크래시</div>}
+        </div>
+        <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+          <Btn t={t} color={t.blue} onClick={()=>updateVal(val+1)}>+1</Btn>
+          <Btn t={t} color={t.blue} onClick={()=>updateVal(val+10)}>+10</Btn>
+          <Btn t={t} color={t.amb} onClick={()=>updateVal(val-1)}>-1</Btn>
+          <Btn t={t} color={t.amb} onClick={()=>updateVal(val-10)}>-10</Btn>
+          <Btn t={t} color={t.tx2} onClick={()=>updateVal(0)}>0</Btn>
+        </div>
+      </Panel>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>Overflow 연산자 &+</div>
+        <div style={{background:t.sur2,borderRadius:12,padding:16,border:`1.5px solid ${t.bdr}`,textAlign:"center"}}>
+          <div style={{color:t.tx3,fontSize:11,fontFamily:"monospace"}}>현재 값</div>
+          <div style={{fontFamily:"monospace",fontSize:32,fontWeight:700,color:t.pur,margin:"8px 0"}}>{wrapVal}</div>
+          <Btn t={t} color={t.pur} onClick={wrapAdd} full>&+ 1 (Wrapping 덧셈)</Btn>
+          {wrapVal<0&&<div className="pi" style={{color:t.amb,fontSize:12,marginTop:8}}>127 → -128로 순환! (&+는 크래시 없이 순환)</div>}
+        </div>
+        <InfoBox t={t} color={t.red} bg={t.redBg} brd={t.redBrd}>
+          <b>2의 보수</b>: 음수를 표현하는 방법.<br/>
+          -1 = 11111111, -128 = 10000000<br/>
+          반전 + 1 = 음수 (예: 5 → ~5+1 = -5)
+        </InfoBox>
+        <Btn t={t} color={t.tx2} onClick={()=>setWrapVal(127)}>↺ 127로 리셋</Btn>
+      </Panel>
+    </Grid2>
+    <Code t={t} code={`// Swift Int overflow → 런타임 크래시!
+var x: Int8 = 127
+// x += 1  // 💥 EXC_BAD_INSTRUCTION
+
+// Overflow 연산자 — 의도적 순환
+var y: Int8 = 127
+y = y &+ 1   // -128 (순환)
+y = y &- 1   // 127
+y = y &* 2   // -2
+
+// 왜 Int8이 -128~127인가?
+// 8비트 = 2^8 = 256개 표현
+// 음수: -128 ~ -1  (128개)
+// 양수: 0 ~ 127    (128개)
+// 총 256개
+
+// 실전: 보통 Int (64비트) 사용
+// Int.max = 9,223,372,036,854,775,807
+// 그래도 금액 계산 등에선 주의!`}/>
+  </div>;
+}
+
+// 30. FLOATING POINT
+function FloatPointDemo({t}) {
+  const [a,setA]=useState(0.1);
+  const [b,setB]=useState(0.2);
+  const result=a+b;
+  const exact=(a*10+b*10)/10;
+  const isExact=Math.abs(result-exact)<1e-15;
+  const [showBits,setShowBits]=useState(false);
+  const presets=[[0.1,0.2],[0.3,0.3],[1.0,2.0],[0.1,0.7],[999.99,0.01]];
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>부동소수점 계산기</div>
+        <div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center",flexWrap:"wrap",margin:"10px 0"}}>
+          <div style={{background:t.blueBg,border:`1.5px solid ${t.blueBrd}`,borderRadius:10,padding:"10px 16px"}}>
+            <span style={{fontFamily:"monospace",fontSize:20,fontWeight:700,color:t.blue}}>{a}</span>
+          </div>
+          <span style={{fontSize:20,color:t.tx2}}>+</span>
+          <div style={{background:t.blueBg,border:`1.5px solid ${t.blueBrd}`,borderRadius:10,padding:"10px 16px"}}>
+            <span style={{fontFamily:"monospace",fontSize:20,fontWeight:700,color:t.blue}}>{b}</span>
+          </div>
+          <span style={{fontSize:20,color:t.tx2}}>=</span>
+          <div style={{background:isExact?t.grnBg:t.redBg,border:`1.5px solid ${isExact?t.grnBrd:t.redBrd}`,borderRadius:10,padding:"10px 16px"}}>
+            <span style={{fontFamily:"monospace",fontSize:20,fontWeight:700,color:isExact?t.grn:t.red}}>{result.toFixed(17)}</span>
+          </div>
+        </div>
+        {!isExact&&<div className="pi" style={{background:t.redBg,border:`1px solid ${t.redBrd}`,borderRadius:10,padding:10,textAlign:"center"}}>
+          <span style={{color:t.red,fontSize:13}}>❌ 기대값 {exact}과 다름! 오차: {Math.abs(result-exact).toExponential(2)}</span>
+        </div>}
+        {isExact&&<div style={{background:t.grnBg,border:`1px solid ${t.grnBrd}`,borderRadius:10,padding:10,textAlign:"center"}}>
+          <span style={{color:t.grn,fontSize:13}}>✅ 이 조합은 정확합니다</span>
+        </div>}
+        <div style={{color:t.tx3,fontSize:12,marginTop:8}}>프리셋:</div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          {presets.map(([x,y],i)=>(
+            <button key={i} className="sb" onClick={()=>{setA(x);setB(y)}} style={{background:t.sur2,border:`1px solid ${t.bdr}`,borderRadius:8,padding:"5px 10px",fontFamily:"monospace",fontSize:12,color:t.tx2,cursor:"pointer"}}>{x} + {y}</button>
+          ))}
+        </div>
+      </Panel>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>IEEE 754 구조 (64비트)</div>
+        <div style={{display:"flex",gap:4,marginTop:8}}>
+          <div style={{background:t.redBg,border:`1.5px solid ${t.redBrd}`,borderRadius:8,padding:"8px 10px",textAlign:"center",width:40}}>
+            <div style={{fontFamily:"monospace",fontSize:14,fontWeight:700,color:t.red}}>0</div>
+            <div style={{fontSize:8,color:t.tx3,marginTop:2}}>부호</div>
+          </div>
+          <div style={{background:t.blueBg,border:`1.5px solid ${t.blueBrd}`,borderRadius:8,padding:"8px 10px",textAlign:"center",flex:1}}>
+            <div style={{fontFamily:"monospace",fontSize:14,fontWeight:700,color:t.blue}}>01111111011</div>
+            <div style={{fontSize:8,color:t.tx3,marginTop:2}}>지수 (11비트)</div>
+          </div>
+          <div style={{background:t.grnBg,border:`1.5px solid ${t.grnBrd}`,borderRadius:8,padding:"8px 10px",textAlign:"center",flex:2}}>
+            <div style={{fontFamily:"monospace",fontSize:12,fontWeight:700,color:t.grn,wordBreak:"break-all"}}>1001100110011...</div>
+            <div style={{fontSize:8,color:t.tx3,marginTop:2}}>가수 (52비트)</div>
+          </div>
+        </div>
+        <InfoBox t={t} color={t.amb} bg={t.ambBg} brd={t.ambBrd}>
+          0.1은 2진수로 <b>무한 순환소수</b>!<br/>
+          0.1₁₀ = 0.0001100110011…₂ (반복)<br/>
+          52비트에서 잘림 → 미세한 오차 발생.
+        </InfoBox>
+        <InfoBox t={t} color={t.grn} bg={t.grnBg} brd={t.grnBrd}>
+          <b>해결책</b>: 금액은 <b>Decimal</b> 타입 사용!<br/>
+          Decimal은 10진수 기반 → 정확한 계산.
+        </InfoBox>
+      </Panel>
+    </Grid2>
+    <Code t={t} code={`// ❌ Double로 금액 계산 — 위험!
+let price: Double = 0.1 + 0.2
+print(price)  // 0.30000000000000004 😱
+print(price == 0.3)  // false!
+
+// ✅ Decimal로 금액 계산 — 정확!
+let price: Decimal = Decimal(string: "0.1")!
+    + Decimal(string: "0.2")!
+print(price)  // 0.3 ✅
+print(price == Decimal(string: "0.3")!)  // true
+
+// Float vs Double
+// Float:  32비트, 유효숫자 ~7자리
+// Double: 64비트, 유효숫자 ~15자리
+
+// 실전 규칙:
+// • 금액 → Decimal
+// • 과학 계산 → Double
+// • 비교 시 == 대신 오차 허용 비교
+let epsilon = 1e-10
+if abs(a - b) < epsilon { /* 같다고 판단 */ }`}/>
+  </div>;
+}
+
+// 31. UNICODE & STRING
+function UnicodeDemo({t}) {
+  const [text,setText]=useState("안녕👨‍👩‍👧‍👦");
+  const getCodePoints=(s)=>{const pts=[];for(const ch of s){pts.push({char:ch,hex:[...ch].map(c=>c.codePointAt(0).toString(16).toUpperCase().padStart(4,"0")),bytes:new TextEncoder().encode(ch).length})}return pts};
+  const codePoints=getCodePoints(text);
+  const utf16Len=text.length;
+  const charCount=[...text].length;
+  const byteLen=new TextEncoder().encode(text).length;
+  return <div className="fs" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <Grid2 t={t}>
+      <Panel t={t}>
+        <div style={{fontWeight:600,fontSize:14}}>문자열 분석기</div>
+        <input value={text} onChange={e=>setText(e.target.value)} placeholder="문자열 입력..." style={{width:"100%",padding:"10px 14px",borderRadius:10,border:`1.5px solid ${t.bdr}`,background:t.sur2,color:t.tx,fontFamily:"monospace",fontSize:14,outline:"none"}}/>
+        <div style={{display:"flex",gap:8,marginTop:10}}>
+          <MBox t={t} label="Swift .count" value={charCount} color={t.blue}/>
+          <MBox t={t} label="UTF-16 units" value={utf16Len} color={t.amb}/>
+          <MBox t={t} label="UTF-8 bytes" value={byteLen} color={t.grn}/>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:10}}>
+          {codePoints.map((cp,i)=>(
+            <div key={i} className="pi" style={{display:"flex",alignItems:"center",gap:10,background:t.sur2,borderRadius:10,padding:"8px 12px",border:`1px solid ${t.bdr}`}}>
+              <span style={{fontSize:24,minWidth:36,textAlign:"center"}}>{cp.char}</span>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:"monospace",fontSize:11,color:t.pur}}>U+{cp.hex.join(" U+")}</div>
+                <div style={{fontFamily:"monospace",fontSize:10,color:t.tx3}}>UTF-8: {cp.bytes}바이트</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+          {[["Hello",],["café"],["한글🇰🇷"],["👨‍👩‍👧‍👦"],["🏳️‍🌈"],["1️⃣2️⃣3️⃣"]].map(([s],i)=>(
+            <button key={i} className="sb" onClick={()=>setText(s)} style={{background:t.sur2,border:`1px solid ${t.bdr}`,borderRadius:8,padding:"4px 10px",fontSize:12,color:t.tx2,cursor:"pointer"}}>{s}</button>
+          ))}
+        </div>
+      </Panel>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <Code t={t} code={`// Swift String은 Character 배열
+let family = "👨‍👩‍👧‍👦"
+family.count          // 1 (사람이 보는 글자 수)
+family.utf16.count    // 11 (UTF-16 코드 유닛)
+family.utf8.count     // 25 (바이트 수!)
+
+// 왜 String.Index가 Int가 아닌가?
+let str = "café"
+// str[2]  ← 컴파일 에러!
+
+// 이유: 문자마다 바이트 수가 다름
+// c = 1바이트, a = 1, f = 1, é = 2
+// → 정수 인덱스로 "점프" 불가능
+
+let idx = str.index(str.startIndex, offsetBy: 2)
+print(str[idx])  // "f"
+
+// 이모지 = 여러 코드 포인트의 조합
+// 👨‍👩‍👧‍👦 = 👨 + ZWJ + 👩 + ZWJ + 👧 + ZWJ + 👦
+// ZWJ = Zero Width Joiner (U+200D)`}/>
+        <InfoBox t={t} color={t.pur} bg={t.purBg} brd={t.purBrd}>
+          <b>UTF-8</b>: 가변 길이 인코딩.<br/>
+          ASCII = 1바이트, 한글 = 3바이트, 이모지 = 4바이트+
+        </InfoBox>
+        <InfoBox t={t} color={t.blue} bg={t.blueBg} brd={t.blueBrd}>
+          <b>핵심</b>: .count는 사람이 보는 글자 수. NSString.length는 UTF-16 유닛 수. 둘은 다르다!
+        </InfoBox>
+      </div>
+    </Grid2>
+  </div>;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  APP
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2193,6 +2875,12 @@ function App() {
       case "escaping": return <EscapingDemo {...p}/>;
       case "propwrap": return <PropWrapDemo {...p}/>;
       case "responder":return <ResponderDemo {...p}/>;
+      case "stackheap":return <StackHeapDemo {...p}/>;
+      case "retaincycle":return <RetainCycleDemo {...p}/>;
+      case "instruments":return <InstrumentsDemo {...p}/>;
+      case "overflow":return <OverflowDemo {...p}/>;
+      case "floatpoint":return <FloatPointDemo {...p}/>;
+      case "unicode":return <UnicodeDemo {...p}/>;
     }
   };
   // Group concepts
